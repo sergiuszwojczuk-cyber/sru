@@ -1,2 +1,0 @@
-# sru
-system rezerwacji uslug
