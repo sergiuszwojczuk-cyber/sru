@@ -1,0 +1,207 @@
+**✅ PEŁNY PLAN PROJEKTU – PRZYCHODNIA LEKARSKA**  
+**Temat: System Rezerwacji Wizyt w Przychodni Lekarskiej**
+
+---
+
+### **Ogólne założenia projektu**
+
+**Nazwa przykładowa:** `Przychodnia ZdrowiePlus` lub `Przychodnia Medyczna Vita`
+
+**Role w systemie:**
+- **Pacjent** (Klient)
+- **Lekarz** (Pracownik)
+- **Administrator** (Rejestracja/Kierownik Przychodni)
+
+**Główny proces rezerwacji:**
+**Specjalizacja → Lekarz → Data → Godzina → Potwierdzenie**
+
+---
+
+### **HARMONOGRAM OGÓLNY (5 Etapów)**
+
+| Etap | Termin oddania     | Nazwa etapu                              | Ocena dotyczy głównie          |
+|------|--------------------|------------------------------------------|--------------------------------|
+| 1    | **25.09.2026**     | Projekt systemu, GitHub i baza danych    | Baza danych + organizacja      |
+| 2    | **16.10.2026**     | Użytkownicy, rejestracja i logowanie     | Bezpieczeństwo autoryzacji     |
+| 3    | **06.11.2026**     | Panel administracyjny                    | CRUD + zarządzanie danymi      |
+| 4    | **20.11.2026**     | Część pacjenta + System rezerwacji       | **NAJWAŻNIEJSZY ETAP** – logika wizyt |
+| 5    | **27.11.2026**     | Gotowy projekt + Prezentacja             | Całość + jakość + obrona       |
+
+---
+
+## **SZCZEGÓŁOWY PLAN KAŻDEGO ETAPU**
+
+### **ETAP 1 – Projekt systemu, GitHub i baza danych** (do 25.09.2026)
+
+**Cel:** Solidna podstawa projektu + dobra organizacja pracy.
+
+**Co musisz zrobić:**
+
+1. **Repozytorium GitHub**
+   - Jedno wspólne repozytorium
+   - Regularne commity **obu osób** (z sensownymi opisami)
+   - Struktura folderów (patrz niżej)
+   - Plik `.gitignore`
+
+2. **README.md** – bardzo rozbudowany
+   - Nazwa przychodni, autorzy, technologie
+   - Opis systemu i ról
+   - Instrukcja uruchomienia
+   - Konta testowe
+   - Opis funkcji dodatkowych (jeśli będą)
+
+3. **Baza danych** (`database/database.sql`)
+   - Tabele: `users`, `specializations`, `doctors`, `doctor_specialization`, `availabilities`, `appointments`, `statuses`
+   - Klucze główne i obce, relacje 1:N i N:M
+   - Indeksy, ograniczenia (`CHECK`, `UNIQUE`, `NOT NULL`)
+   - Poprawne typy danych
+   - Dane testowe (kilku lekarzy, specjalizacji, pacjentów, dostępnych terminów)
+
+4. **Diagram ERD** (możesz narysować w draw.io i wrzucić jako obrazek)
+
+**Checklist na ocenę 5:**
+- README kompletny
+- Baza znormalizowana (co najmniej 3NF)
+- Wszystkie wymagane relacje
+- Dane testowe + przykładowe wizyty
+- Sensowna historia commitów obu osób
+
+---
+
+### **ETAP 2 – Użytkownicy, rejestracja i logowanie** (do 16.10.2026)
+
+**Co ma działać:**
+
+- Rejestracja pacjenta (imię, nazwisko, email, telefon, hasło, PESEL opcjonalnie)
+- Logowanie dla wszystkich ról
+- Poprawne sesje + przekierowanie do odpowiedniego panelu po zalogowaniu
+- Trzy role: `patient`, `doctor`, `admin`
+- Bezpieczne hashowanie haseł (`password_hash()`)
+- Walidacja formularzy (po stronie serwera + klienta)
+- Ochrona stron (nie da się wejść do panelu admina/lekarza przez wpisanie URL)
+- Profil użytkownika (edycja danych)
+
+**Dodatkowo na wyższą ocenę:**
+- Przypominanie hasła / reset hasła (opcjonalnie)
+- Walidacja unikalności email + PESEL
+- Komunikaty błędów
+
+---
+
+### **ETAP 3 – Panel administracyjny** (do 06.11.2026)
+
+**Zakres panelu Admina:**
+
+- Dashboard (liczba pacjentów, lekarzy, wizyt dziś, w tym miesiącu)
+- Zarządzanie specjalizacjami (CRUD)
+- Zarządzanie lekarzami (dodawanie, edycja, przypisywanie specjalizacji, aktywacja/dezaktywacja)
+- Zarządzanie dostępnością lekarzy (godziny pracy, urlopy, wolne terminy)
+- Zarządzanie wszystkimi wizytami (lista + filtrowanie + zmiana statusu)
+- Zarządzanie użytkownikami (pacjentami i lekarzami)
+- Podstawowe statystyki
+
+**Na ocenę 5-6:**
+- Pełny CRUD
+- Ładny, czytelny interfejs
+- Walidacja formularzy
+- Ochrona przed nieuprawnionym dostępem
+
+---
+
+### **ETAP 4 – Część pacjenta + System rezerwacji** (do 20.11.2026) ← **NAJWAŻNIEJSZY ETAP**
+
+**To jest serce projektu – tu jest najwięcej punktów.**
+
+**Funkcjonalności Pacjenta:**
+- Przeglądanie specjalizacji i lekarzy
+- Proces rezerwacji: Specjalizacja → Lekarz → Kalendarz → Wolne godziny → Potwierdzenie
+- Panel "Moje wizyty" (przyszłe + historia)
+- Anulowanie swojej wizyty
+- Profil pacjenta
+
+**Kluczowa logika systemu (MUSI działać idealnie):**
+- System musi brać pod uwagę **czas trwania wizyty** (np. 15 lub 30 minut)
+- **Inteligentne sprawdzanie kolizji terminów** (nakładanie się wizyt)
+- Blokowanie terminów, które kolidują
+- Sprawdzenie konfliktów **po stronie serwera** przed zapisem do bazy
+- Lekarz widzi tylko swoje wizyty
+- Pacjent nie widzi cudzych wizyt
+
+**Statusy wizyt:** `pending`, `confirmed`, `completed`, `cancelled`
+
+---
+
+### **ETAP 5 – Gotowy projekt i prezentacja** (do 27.11.2026)
+
+**Co ma być zrobione:**
+
+- Cała aplikacja działa od A do Z
+- Responsywność (działa na telefonie)
+- Estetyczny interfejs (CSS + ewentualnie Bootstrap/Tailwind)
+- Bezpieczeństwo (XSS, SQL Injection, CSRF, ochrona sesji)
+- Funkcje dodatkowe (minimum 2-3 dobrze zrobione):
+  - Graficzny kalendarz (FullCalendar)
+  - Powiadomienia e-mail (opcjonalnie)
+  - Filtry, wyszukiwanie, paginacja
+  - Historia statusów wizyt
+  - Eksport wizyt do PDF
+  - System urlopów lekarzy
+
+- README zaktualizowane
+- Instrukcja uruchomienia + konta testowe
+
+**Prezentacja końcowa:**
+- Nauczyciel będzie prosił o zalogowanie się na różne role
+- Wykonanie rezerwacji
+- Spróbowanie zajęcia terminu, który koliduje
+- Pokazanie paneli
+- Wyjaśnienie kodu (szczególnie logiki rezerwacji i bazy danych)
+
+---
+
+### **Rekomendowana struktura projektu**
+
+```bash
+przychodnia-zdrowieplus/
+├── README.md
+├── database/
+│   └── database.sql
+├── public/
+│   ├── index.php
+│   ├── login.php
+│   ├── register.php
+│   ├── dashboard/
+│   ├── patient/
+│   ├── doctor/
+│   └── admin/
+├── src/
+│   ├── config/
+│   ├── controllers/
+│   ├── models/
+│   ├── views/
+│   └── utils/
+├── assets/
+│   ├── css/
+│   ├── js/
+│   └── images/
+├── vendor/ (jeśli Composer)
+└── .gitignore
+```
+
+---
+
+**Chcesz, żebym teraz przygotował konkretne materiały na start?**
+
+Mogę Ci od razu przygotować:
+
+1. **Gotowy schemat bazy danych** (`database.sql`) pod przychodnię
+2. **Gotowy plik README.md**
+3. **Checklistę techniczną** na każdy etap
+
+Napisz, co chcesz dostać jako pierwsze:
+
+- **`Daj schemat bazy`** (najważniejsze na Etap 1)
+- **`Daj README`**
+- **`Daj checklistę do Etapu 1`**
+
+Albo napisz **"Daj wszystko po kolei"** – będę Ci wysyłał krok po kroku.
