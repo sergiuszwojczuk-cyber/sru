@@ -1,9 +1,9 @@
 {
-    "name": "przychodnia-pochodnia",
+    "name": "przychodnia/pochodnia",
     "description": "System rezerwacji wizyt - Przychodnia Pochodnia",
     "authors": [
         {
-            "name": "Twoje Imię i Nazwisko",
+            "name": "Twój Imię Nazwisko",
             "email": "twoj@email.pl"
         }
     ],
@@ -11,6 +11,7 @@
         "php": "^8.1"
     },
     "config": {
-        "optimize-autoloader": true
+        "optimize-autoloader": true,
+        "allow-plugins": true
     }
 }
