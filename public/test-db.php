@@ -1,45 +1,37 @@
 <?php
-require_once '../src/config/database.php';
-
-echo "<h1>🔍 Diagnostyka Railway - Przychodnia Pochodnia</h1>";
+// public/test-db.php
+require_once __DIR__ . '/../src/config/database.php';
 
 try {
-    // Pokazuje aktualnie używaną bazę
-    $stmt = $pdo->query("SELECT DATABASE() as db_name");
-    $db = $stmt->fetch();
-    echo "<p><strong>Aktualna baza danych:</strong> " . htmlspecialchars($db['db_name']) . "</p>";
+    // KLUCZOWY MOMENT: Wywołujemy funkcję i przypisujemy do $pdo
+    $pdo = getDbConnection();
 
-    // Pokazuje wszystkie tabele w bieżącej bazie
+    echo "<h1>Diagnostyka Railway - Przychodnia Pochodnia</h1>";
+    echo "<p style='color: green;'>✅ Połączenie z bazą danych: OK</p>";
+
+    // Sprawdzenie tabel
     $stmt = $pdo->query("SHOW TABLES");
     $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
-    
-    echo "<h2>📋 Tabele w bazie:</h2>";
-    if (empty($tables)) {
-        echo "<p style='color:red'>Brak tabel w bazie!</p>";
-    } else {
-        echo "<ul>";
+
+    if (count($tables) > 0) {
+        echo "<h3>Tabele w bazie:</h3><ul>";
         foreach ($tables as $table) {
-            echo "<li>✅ " . htmlspecialchars($table) . "</li>";
+            echo "<li>$table</li>";
         }
         echo "</ul>";
+
+        // Sprawdzenie czy są użytkownicy testowi
+        $stmtUsers = $pdo->query("SELECT first_name, last_name, role FROM users");
+        $users = $stmtUsers->fetchAll(PDO::FETCH_ASSOC);
+        
+        echo "<h3>Użytkownicy w systemie: " . count($users) . "</h3>";
+    } else {
+        echo "<p style='color: red;'>⚠ Brak tabel w bazie!</p>";
     }
 
-    // Test zapytania do tabeli users
-    $stmt = $pdo->query("SELECT COUNT(*) as count FROM users");
-    $count = $stmt->fetch();
-    echo "<p><strong>Liczba użytkowników:</strong> " . $count['count'] . "</p>";
-
-    echo "<hr><p style='color:green; font-weight:bold'>✅ Połączenie z bazą działa prawidłowo.</p>";
-
-} catch (PDOException $e) {
-    echo "<h2 style='color:red'>❌ Błąd:</h2>";
-    echo "<pre>" . htmlspecialchars($e->getMessage()) . "</pre>";
-    
-    echo "<h3>Informacje diagnostyczne:</h3>";
-    echo "<p>HOST: " . getenv('MYSQLHOST') . "</p>";
-    echo "<p>DATABASE: " . getenv('MYSQLDATABASE') . "</p>";
-    echo "<p>USER: " . getenv('MYSQLUSER') . "</p>";
+} catch (Exception $e) {
+    echo "<h1>❌ Błąd diagnostyki:</h1>";
+    echo "<pre style='background: #fee; padding: 10px; border: 1px solid red;'>" . $e->getMessage() . "</pre>";
 }
 
-echo "<br><a href='index.php'>← Powrót do strony głównej</a>";
-?>
+echo "<br><hr><a href='index.php'>← Powrót do strony głównej</a>";
