@@ -1,26 +1,27 @@
 <?php
+// public/init-db.php
 require_once __DIR__ . '/../src/config/database.php';
 
 try {
     $pdo = getDbConnection();
+    echo "Połączono z bazą. Rozpoczynanie tworzenia tabel...<br>";
     
-    // Odczytaj plik SQL
     $sqlFile = __DIR__ . '/../database/database.sql';
     
     if (!file_exists($sqlFile)) {
-        die("Błąd: Plik database/database.sql nie istnieje!");
+        die("Błąd: Nie znaleziono pliku SQL w: $sqlFile");
     }
     
     $sql = file_get_contents($sqlFile);
     
-    // Wykonaj kod SQL
+    // Ważne: Railway/MySQL czasem nie lubi wielu komend w jednym exec()
+    // ale przy standardowych tabelach powinno przejść.
     $pdo->exec($sql);
     
-    echo "<h1>SUKCES! Baza danych została pomyślnie zainicjowana.</h1>";
-    echo "<p>Utworzono tabele oraz wgrano dane testowe.</p>";
-    echo "<a href='test-db.php'>Przejdź do testu bazy</a>";
+    echo "<h2>Sukces! Tabele zostały utworzone.</h2>";
+    echo "<a href='test-db.php'>Sprawdź diagnostykę</a>";
 
-} catch (PDOException $e) {
-    echo "<h1>Błąd podczas tworzenia bazy danych:</h1>";
+} catch (Exception $e) {
+    echo "<h2>Wystąpił błąd:</h2>";
     echo "<pre>" . $e->getMessage() . "</pre>";
 }
