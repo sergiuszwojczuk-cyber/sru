@@ -1,4 +1,4 @@
-<?php require_once __DIR__ . '/../src/templates/header.php'; ?>
+<?php require_once DIR . '/../src/templates/header.php'; ?>
 
 <div class="row justify-content-center mt-5">
     <div class="col-md-5">
@@ -7,12 +7,10 @@
                 <h4>Logowanie do systemu</h4>
             </div>
             <div class="card-body">
-                <!-- Komunikat o sukcesie (np. po rejestracji) -->
                 <?php if(isset($_SESSION['success'])): ?>
                     <div class="alert alert-success"><?php echo $_SESSION['success']; unset($_SESSION['success']); ?></div>
                 <?php endif; ?>
 
-                <!-- Komunikat o błędzie -->
                 <?php if(isset($_SESSION['error'])): ?>
                     <div class="alert alert-danger"><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></div>
                 <?php endif; ?>
@@ -36,4 +34,4 @@
     </div>
 </div>
 
-<?php require_once __DIR__ . '/../src/templates/footer.php'; ?>
+<?php require_once DIR . '/../src/templates/footer.php'; ?>

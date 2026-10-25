@@ -1,10 +1,11 @@
 <?php
 // public/logout.php
-require_once __DIR__ . '/../src/config/session.php';
+require_once DIR . '/../src/config/session.php';
 
-// Czyszczenie sesji i jej niszczenie
+// Wyczyść wszystkie zmienne sesji
 $_SESSION = array();
 
+// Usuń ciasteczko sesji
 if (ini_get("session.use_cookies")) {
     $params = session_get_cookie_params();
     setcookie(session_name(), '', time() - 42000,
@@ -13,8 +14,9 @@ if (ini_get("session.use_cookies")) {
     );
 }
 
+// Zniszcz sesję
 session_destroy();
 
-// Przekierowanie do logowania
+// Przekieruj na stronę logowania
 header("Location: login.php");
 exit();

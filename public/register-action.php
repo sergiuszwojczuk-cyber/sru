@@ -3,7 +3,6 @@
 require_once __DIR__ . '/../src/config/session.php';
 require_once __DIR__ . '/../src/config/database.php';
 
-// Zabezpieczenie - tylko wywołanie POST jest akceptowane
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: register.php");
     exit();
@@ -12,64 +11,69 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 try {
     $pdo = getDbConnection();
     
-    // 1. Pobranie i czyszczenie danych
-    $email = trim($_POST['email']);
-    $password = $_POST['password'];
-    $firstName = trim($_POST['first_name']);
-    $lastName = trim($_POST['last_name']);
-    $pesel = trim($_POST['pesel']);
-    $phone = trim($_POST['phone']);
+    // 1. Pobranie i oczyszczenie danych z formularza
+    $email     = trim($_POST['email'] ?? '');
+    $password  = $_POST['password'] ?? '';
+    $imie      = trim($_POST['imie'] ?? '');
+    $nazwisko  = trim($_POST['nazwisko'] ?? '');
+    $telefon   = trim($_POST['telefon'] ?? '');
+    $dataUr    = !empty($_POST['data_urodzenia']) ? $_POST['data_urodzenia'] : null;
+    $adres     = trim($_POST['adres'] ?? '');
+    $miasto    = trim($_POST['miasto'] ?? '');
+    $kod       = trim($_POST['kod_pocztowy'] ?? '');
 
-    // 2. Sprawdzenie, czy email lub PESEL już istnieje
+    // 2. Walidacja
+    if ($email === '' || $password === '' || $imie === '' || $nazwisko === '') {
+        throw new Exception("Wypełnij wszystkie wymagane pola.");
+    }
+    
+    if (strlen($password) < 8) {
+        throw new Exception("Hasło musi mieć co najmniej 8 znaków.");
+    }
+
+    // 3. Sprawdzenie czy email już istnieje
     $stmtCheck = $pdo->prepare("SELECT id FROM uzytkownicy WHERE email = ?");
     $stmtCheck->execute([$email]);
     if ($stmtCheck->rowCount() > 0) {
-        $_SESSION['error'] = "Podany adres email jest już zajęty.";
-        header("Location: register.php");
-        exit();
+        throw new Exception("Podany adres e-mail jest już zajęty.");
     }
 
-    $stmtPesel = $pdo->prepare("SELECT uzytkownik_id FROM pacjenci WHERE pesel = ?");
-    $stmtPesel->execute([$pesel]);
-    if ($stmtPesel->rowCount() > 0) {
-        $_SESSION['error'] = "Podany PESEL istnieje już w naszej bazie.";
-        header("Location: register.php");
-        exit();
-    }
-
-    // 3. Haszowanie hasła (BARDZO WAŻNE DLA BEZPIECZEŃSTWA)
+    // 4. Haszowanie hasła
     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
     // ==============================================================
-    // 4. ROZPOCZĘCIE TRANSAKCJI BAZODANOWEJ (Poziom zaawansowany)
+    // 5. TRANSAKCJA BAZODANOWA (Zapis do uzytkownicy + profil_pacjenta)
     // ==============================================================
     $pdo->beginTransaction();
 
-    // KROK A: Zapis do tabeli uzytkownicy
-    $stmtUser = $pdo->prepare("INSERT INTO uzytkownicy (email, haslo, rola) VALUES (?, ?, 'pacjent')");
-    $stmtUser->execute([$email, $hashedPassword]);
+    // A) Zapis podstawowy do uzytkownicy
+    $stmtUser = $pdo->prepare("
+        INSERT INTO uzytkownicy (imie, nazwisko, email, haslo, rola, telefon) 
+        VALUES (?, ?, ?, ?, 'pacjent', ?)
+    ");
+    $stmtUser->execute([$imie, $nazwisko, $email, $hashedPassword, $telefon]);
     
-    // Pobranie ID nowo utworzonego użytkownika
-    $newUserId = $pdo->lastInsertId();
+    $newUserId = (int)$pdo->lastInsertId();
 
-    // KROK B: Zapis do tabeli pacjenci powiązanego z nowym kontem
-    $stmtPatient = $pdo->prepare("INSERT INTO pacjenci (uzytkownik_id, imie, nazwisko, pesel, telefon) VALUES (?, ?, ?, ?, ?)");
-    $stmtPatient->execute([$newUserId, $firstName, $lastName, $pesel, $phone]);
+    // B) Zapis profilu do profil_pacjenta (Poprawna nazwa tabeli!)
+    $stmtProfile = $pdo->prepare("
+        INSERT INTO profil_pacjenta (uzytkownik_id, data_urodzenia, adres, miasto, kod_pocztowy) 
+        VALUES (?, ?, ?, ?, ?)
+    ");
+    $stmtProfile->execute([$newUserId, $dataUr, $adres, $miasto, $kod]);
 
-    // Jeśli oba zapytania się udały -> zatwierdzamy zmiany!
+    // Zatwierdzenie transakcji
     $pdo->commit();
 
-    // 5. Zakończenie sukcesem
-    $_SESSION['success'] = "Konto zostało pomyślnie utworzone! Możesz się teraz zalogować.";
+    $_SESSION['success'] = "Konto zostało pomyślnie utworzone! Możesz się zalogować.";
     header("Location: login.php");
     exit();
 
 } catch (Exception $e) {
-    // JEŚLI COŚ POSZŁO NIE TAK (np. błąd SQL) -> Cofamy całą transakcję!
     if (isset($pdo) && $pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    $_SESSION['error'] = "Wystąpił krytyczny błąd systemu: " . $e->getMessage();
+    $_SESSION['error'] = "Błąd rejestracji: " . $e->getMessage();
     header("Location: register.php");
     exit();
 }
