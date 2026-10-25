@@ -37,7 +37,7 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 254) {
     $_SESSION['error'] = 'Podaj prawidłowe imię i nazwisko.';
 } elseif (strlen($telefon) > 30 || strlen($adres) > 255 || strlen($miasto) > 100 || strlen($kod) > 12) {
     $_SESSION['error'] = 'Jedno z podanych pól przekracza dozwoloną długość.';
-} elseif ($dataUr !== null && (!$parsedDate || $parsedDate->format('Y-m-d') !== $dataUr)) {
+} elseif ($dataUr !== null && (!$parsedDate || $parsedDate->format('Y-m-d') !== $dataUr || $dataUr > date('Y-m-d'))) {
     $_SESSION['error'] = 'Podaj prawidłową datę urodzenia.';
 } else {
     $_SESSION['error'] = null;

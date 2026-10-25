@@ -3,8 +3,12 @@
     "description": "System rezerwacji wizyt - Przychodnia Pochodnia",
     "authors": [
         {
-            "name": "Twój Imię Nazwisko",
-            "email": "twoj@email.pl"
+            "name": "Sergiusz Wojczuk",
+            "email": "u22_sergiuszwojczuk@zsp1.siedlce.pl"
+        },
+        {
+            "name": "Jakub Goławski",
+            "email": "u22_jakubgolawski@zsp1.siedlce.pl"
         }
     ],
     "require": {

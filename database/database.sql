@@ -50,7 +50,8 @@ CREATE TABLE IF NOT EXISTS profil_lekarza (
     PRIMARY KEY (uzytkownik_id),
     UNIQUE KEY uq_doctor_profiles_license (numer_pwz),
     CONSTRAINT fk_doctor_profiles_user
-        FOREIGN KEY (uzytkownik_id) REFERENCES uzytkownicy (id) ON DELETE CASCADE
+        FOREIGN KEY (uzytkownik_id) REFERENCES uzytkownicy (id) ON DELETE CASCADE,
+    CONSTRAINT chk_doctor_default_appointment_duration CHECK (domyslny_czas_wizyty > 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS placowki (
@@ -172,7 +173,9 @@ CREATE TABLE IF NOT EXISTS wyjatki_grafiku_lekarza (
         CHECK (
             (godzina_od IS NULL AND godzina_do IS NULL)
             OR (godzina_od IS NOT NULL AND godzina_do IS NOT NULL AND godzina_do > godzina_od)
-        )
+        ),
+    CONSTRAINT chk_schedule_exceptions_extra_hours
+        CHECK (typ_wyjatku <> 'dodatkowe_godziny' OR godzina_od IS NOT NULL)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS wizyty (
@@ -381,3 +384,46 @@ WHERE u.email IN (
     'rodzinny@pochodnia.pl', 'dermatolog@pochodnia.pl'
 )
   AND u.rola = 'lekarz' AND c.nazwa = 'Przychodnia Pochodnia - Centrum';
+
+DROP TRIGGER IF EXISTS trg_wizyty_status_insert;
+DROP TRIGGER IF EXISTS trg_wizyty_status_update;
+
+CREATE TRIGGER trg_wizyty_status_insert
+AFTER INSERT ON wizyty
+FOR EACH ROW
+INSERT INTO historia_statusow_wizyt
+    (wizyta_id, poprzedni_status, nowy_status, zmienil_uzytkownik_id, notatka)
+VALUES
+    (NEW.id, NULL, NEW.status, NULLIF(@aktor_uzytkownik_id, 0), 'Utworzenie wizyty');
+
+CREATE TRIGGER trg_wizyty_status_update
+AFTER UPDATE ON wizyty
+FOR EACH ROW
+INSERT INTO historia_statusow_wizyt
+    (wizyta_id, poprzedni_status, nowy_status, zmienil_uzytkownik_id, notatka)
+SELECT
+    NEW.id, OLD.status, NEW.status, NULLIF(@aktor_uzytkownik_id, 0), 'Zmiana statusu'
+WHERE OLD.status <> NEW.status;
+
+INSERT INTO wizyty
+    (pacjent_id, lekarz_id, placowka_id, usluga_id, data_wizyty, godzina_wizyty,
+     czas_trwania_minut, cena, status)
+SELECT
+    pp.uzytkownik_id, pl.uzytkownik_id, lp.placowka_id, s.id,
+    '2026-11-02', '10:00:00', s.czas_trwania_minut, s.cena, 'potwierdzona'
+FROM uzytkownicy pu
+JOIN profil_pacjenta pp ON pp.uzytkownik_id = pu.id
+JOIN uzytkownicy du ON du.email = 'lekarz@pochodnia.pl' AND du.rola = 'lekarz'
+JOIN profil_lekarza pl ON pl.uzytkownik_id = du.id
+JOIN lekarz_usluga lu ON lu.lekarz_id = pl.uzytkownik_id
+JOIN uslugi s ON s.id = lu.usluga_id AND s.nazwa = 'Konsultacja kardiologiczna'
+JOIN lekarz_placowka lp ON lp.lekarz_id = pl.uzytkownik_id
+JOIN placowki c ON c.id = lp.placowka_id AND c.nazwa = 'Przychodnia Pochodnia - Centrum'
+WHERE pu.email = 'pacjent@pochodnia.pl'
+    AND NOT EXISTS (
+        SELECT 1 FROM wizyty w
+        WHERE w.pacjent_id = pp.uzytkownik_id
+          AND w.lekarz_id = pl.uzytkownik_id
+          AND w.data_wizyty = '2026-11-02'
+          AND w.godzina_wizyty = '10:00:00'
+    );

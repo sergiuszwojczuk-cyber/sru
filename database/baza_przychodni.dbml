@@ -1,5 +1,6 @@
 // Schemat bazy Przychodni Pochodnia.
 // Wklej calosc do edytora na https://dbdiagram.io
+// Triggery historii statusow sa zdefiniowane w database.sql.
 
 Enum rola_uzytkownika {
   pacjent
@@ -33,6 +34,17 @@ Table uzytkownicy {
   email_zweryfikowany_at datetime
   utworzono_at timestamp [not null]
   zaktualizowano_at timestamp [not null]
+}
+
+Table auth_login_attempts {
+  bucket_key char(64) [pk]
+  failed_attempts tinyint [not null, default: 0]
+  window_started_at datetime [not null]
+  locked_until datetime
+
+  indexes {
+    locked_until
+  }
 }
 
 Table profil_pacjenta {
