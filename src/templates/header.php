@@ -1,4 +1,3 @@
-<!-- src/templates/header.php -->
 <?php require_once __DIR__ . '/../config/session.php'; ?>
 <!DOCTYPE html>
 <html lang="pl">
@@ -6,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Przychodnia Pochodnia</title>
-    <!-- Bootstrap 5 CDN (Profesjonalny wygląd) -->
+    <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -14,14 +13,14 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
     <div class="container">
         <a class="navbar-brand" href="index.php">⚕️ Przychodnia Pochodnia</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <?php if (isLoggedIn()): ?>
                     <li class="nav-item">
-                        <span class="nav-link text-warning">Witaj, <?php echo htmlspecialchars($_SESSION['email']); ?>!</span>
+                        <span class="nav-link text-warning">Witaj, <?php echo htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['email']); ?>!</span>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link btn btn-danger text-white ms-2 px-3" href="logout.php">Wyloguj</a>
@@ -39,4 +38,3 @@
     </div>
 </nav>
 <div class="container">
-<!-- Koniec header.php. Poniżej będzie ładowana treść konkretnej strony -->

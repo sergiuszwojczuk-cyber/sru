@@ -1,14 +1,17 @@
 <?php
 // src/config/session.php
-session_start();
-session_regenerate_id(true); // Zabezpieczenie na 6: Zapobiega kradzieży sesji
 
-// Pomocnicza funkcja do sprawdzania, czy ktoś jest zalogowany
+// Uruchamiamy sesję tylko wtedy, gdy jeszcze nie wystartowała
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Funkcja pomocnicza: czy użytkownik jest zalogowany
 function isLoggedIn() {
     return isset($_SESSION['user_id']);
 }
 
-// Pomocnicza funkcja do sprawdzania roli
+// Funkcja pomocnicza: sprawdzanie roli (pacjent, lekarz, admin)
 function hasRole($role) {
     return isset($_SESSION['role']) && $_SESSION['role'] === $role;
 }
