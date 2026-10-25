@@ -1,0 +1,209 @@
+// Schemat bazy Przychodni Pochodnia.
+// Wklej calosc do edytora na https://dbdiagram.io
+
+Enum rola_uzytkownika {
+  pacjent
+  lekarz
+  administrator
+}
+
+Enum status_wizyty {
+  zaplanowana
+  potwierdzona
+  zarejestrowana
+  zakonczona
+  anulowana
+  nieobecnosc
+}
+
+Enum typ_wyjatku_grafiku {
+  niedostepny
+  dodatkowe_godziny
+}
+
+Table uzytkownicy {
+  id int [pk, increment]
+  imie varchar(80) [not null]
+  nazwisko varchar(80) [not null]
+  email varchar(254) [not null, unique]
+  haslo varchar(255) [not null, note: 'Hash hasla, nie jawny tekst']
+  rola rola_uzytkownika [not null, default: 'pacjent']
+  telefon varchar(30)
+  czy_aktywny boolean [not null, default: true]
+  email_zweryfikowany_at datetime
+  utworzono_at timestamp [not null]
+  zaktualizowano_at timestamp [not null]
+}
+
+Table profil_pacjenta {
+  uzytkownik_id int [pk, ref: > uzytkownicy.id]
+  data_urodzenia date
+  adres varchar(255)
+  miasto varchar(100)
+  kod_pocztowy varchar(12)
+  kontakt_alarmowy_imie varchar(160)
+  kontakt_alarmowy_telefon varchar(30)
+  utworzono_at timestamp [not null]
+  zaktualizowano_at timestamp [not null]
+}
+
+Table profil_lekarza {
+  uzytkownik_id int [pk, ref: > uzytkownicy.id]
+  numer_pwz varchar(40) [not null, unique]
+  biogram text
+  domyslny_czas_wizyty int [not null, default: 30, note: 'Minuty']
+  utworzono_at timestamp [not null]
+  zaktualizowano_at timestamp [not null]
+}
+
+Table placowki {
+  id int [pk, increment]
+  nazwa varchar(160) [not null]
+  telefon varchar(30)
+  email varchar(254)
+  ulica varchar(180) [not null]
+  miasto varchar(100) [not null]
+  kod_pocztowy varchar(12) [not null]
+  czy_aktywny boolean [not null, default: true]
+  utworzono_at timestamp [not null]
+  zaktualizowano_at timestamp [not null]
+
+  indexes {
+    (nazwa, ulica, miasto) [unique]
+    (miasto, czy_aktywny)
+  }
+}
+
+Table specjalizacje {
+  id int [pk, increment]
+  nazwa varchar(100) [not null, unique]
+  opis text
+  czy_aktywny boolean [not null, default: true]
+}
+
+Table lekarz_specjalizacja {
+  lekarz_id int [not null, ref: > profil_lekarza.uzytkownik_id]
+  specjalizacja_id int [not null, ref: > specjalizacje.id]
+
+  indexes {
+    (lekarz_id, specjalizacja_id) [pk]
+    (specjalizacja_id, lekarz_id)
+  }
+}
+
+Table lekarz_placowka {
+  lekarz_id int [not null, ref: > profil_lekarza.uzytkownik_id]
+  placowka_id int [not null, ref: > placowki.id]
+
+  indexes {
+    (lekarz_id, placowka_id) [pk]
+    (placowka_id, lekarz_id)
+  }
+}
+
+Table uslugi {
+  id int [pk, increment]
+  specjalizacja_id int [not null, ref: > specjalizacje.id]
+  nazwa varchar(160) [not null]
+  opis text
+  czas_trwania_minut int [not null, default: 30]
+  cena decimal(8,2) [not null, default: 0]
+  czy_aktywny boolean [not null, default: true]
+  utworzono_at timestamp [not null]
+  zaktualizowano_at timestamp [not null]
+
+  indexes {
+    (specjalizacja_id, nazwa) [unique]
+    (czy_aktywny, specjalizacja_id)
+  }
+}
+
+Table lekarz_usluga {
+  lekarz_id int [not null, ref: > profil_lekarza.uzytkownik_id]
+  usluga_id int [not null, ref: > uslugi.id]
+
+  indexes {
+    (lekarz_id, usluga_id) [pk]
+    (usluga_id, lekarz_id)
+  }
+}
+
+Table dostepnosc_lekarza {
+  id int [pk, increment]
+  lekarz_id int [not null]
+  placowka_id int [not null]
+  dzien_tygodnia int [not null, note: 'Dzien ISO: poniedzialek=1, niedziela=7']
+  godzina_od time [not null]
+  godzina_do time [not null]
+  obowiazuje_od date
+  obowiazuje_do date
+  utworzono_at timestamp [not null]
+
+  indexes {
+    (lekarz_id, placowka_id, dzien_tygodnia, godzina_od, godzina_do) [unique]
+    (placowka_id, dzien_tygodnia, obowiazuje_od, obowiazuje_do)
+  }
+}
+
+Table wyjatki_grafiku_lekarza {
+  id int [pk, increment]
+  lekarz_id int [not null]
+  placowka_id int [not null]
+  data_wyjatku date [not null]
+  typ_wyjatku typ_wyjatku_grafiku [not null]
+  godzina_od time
+  godzina_do time
+  powod varchar(255)
+  utworzono_at timestamp [not null]
+
+  indexes {
+    (lekarz_id, placowka_id, data_wyjatku)
+  }
+}
+
+Table wizyty {
+  id int [pk, increment]
+  pacjent_id int [not null, ref: > profil_pacjenta.uzytkownik_id]
+  lekarz_id int [not null]
+  placowka_id int [not null]
+  usluga_id int [not null]
+  data_wizyty date [not null]
+  godzina_wizyty time [not null]
+  czas_trwania_minut int [not null]
+  cena decimal(8,2) [not null]
+  status status_wizyty [not null, default: 'zaplanowana']
+  notatki text
+  powod_anulowania varchar(255)
+  anulowal_uzytkownik_id int [ref: > uzytkownicy.id]
+  aktywna_data_wizyty date [note: 'Data tylko dla aktywnych wizyt; blokuje ponowny termin startu']
+  utworzono_at timestamp [not null]
+  zaktualizowano_at timestamp [not null]
+
+  indexes {
+    (lekarz_id, placowka_id) [name: 'indeks_wizyty_lekarz_placowka']
+    (lekarz_id, aktywna_data_wizyty, godzina_wizyty) [unique]
+    (pacjent_id, aktywna_data_wizyty, godzina_wizyty) [unique]
+    (pacjent_id, data_wizyty, godzina_wizyty)
+    (lekarz_id, data_wizyty, status)
+    (placowka_id, data_wizyty, status)
+  }
+}
+
+Table historia_statusow_wizyt {
+  id bigint [pk, increment]
+  wizyta_id int [not null, ref: > wizyty.id]
+  poprzedni_status status_wizyty
+  nowy_status status_wizyty [not null]
+  zmienil_uzytkownik_id int [ref: > uzytkownicy.id]
+  notatka varchar(255)
+  utworzono_at timestamp [not null]
+
+  indexes {
+    (wizyta_id, utworzono_at)
+  }
+}
+
+Ref: dostepnosc_lekarza.(lekarz_id, placowka_id) > lekarz_placowka.(lekarz_id, placowka_id)
+Ref: wyjatki_grafiku_lekarza.(lekarz_id, placowka_id) > lekarz_placowka.(lekarz_id, placowka_id)
+Ref: wizyty.(lekarz_id, placowka_id) > lekarz_placowka.(lekarz_id, placowka_id)
+Ref: wizyty.(lekarz_id, usluga_id) > lekarz_usluga.(lekarz_id, usluga_id)

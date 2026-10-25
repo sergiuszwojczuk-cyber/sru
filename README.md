@@ -32,6 +32,35 @@
 - Walidacja danych po stronie serwera
 - Responsywny interfejs
 
+## Baza danych
+
+Schemat bazy MySQL/MariaDB znajduje się w [`database/database.sql`](database/database.sql),
+a jego polska wersja w formacie DBML — gotowa do wklejenia do
+[dbdiagram.io](https://dbdiagram.io) — w [`database/baza_przychodni.dbml`](database/baza_przychodni.dbml).
+Otwórz plik DBML, skopiuj całą jego zawartość i wklej ją do edytora na dbdiagram.io.
+Oba schematy zawierają te same tabele i relacje. Nazwy tabel, kolumn, ról i
+statusów są po polsku (bez polskich znaków w identyfikatorach, aby uniknąć
+problemów ze zgodnością narzędzi).
+
+Skrypt tworzy tabele, jeśli jeszcze nie istnieją, i dodaje przykładowe konta
+oraz ofertę. Nie usuwa tabel ani istniejących danych. Jest to schemat startowy,
+a nie migracja poprzedniej wersji bazy: nową instalację uruchom na pustej bazie.
+Przed zmianą już używanej bazy przygotuj i przetestuj osobną migrację oraz kopię
+zapasową; samo ponowne uruchomienie skryptu nie zmieni istniejących tabel.
+
+Konta demonstracyjne (hasło dla każdego: `demo1234`):
+
+- `admin@pochodnia.pl` — administrator
+- `lekarz@pochodnia.pl`, `okulista@pochodnia.pl`, `pediatra@pochodnia.pl`,
+  `rodzinny@pochodnia.pl`, `dermatolog@pochodnia.pl` — lekarze pięciu specjalizacji
+- `pacjent@pochodnia.pl`, `pacjent2@pochodnia.pl`, `pacjent3@pochodnia.pl`,
+  `pacjent4@pochodnia.pl` — pacjenci
+
+Nie używaj kont demonstracyjnych w środowisku produkcyjnym. Wizyta może być
+zarezerwowana ponownie po anulowaniu lub zakończeniu; aplikacja rezerwująca
+powinna dodatkowo sprawdzać nakładające się przedziały czasu w transakcji,
+ponieważ indeks bazy blokuje tylko identyczny czas rozpoczęcia wizyty.
+
 ## O projekcie
 
 System rezerwacji wizyt lekarskich w przychodni **VitaMed**. Umożliwia pacjentom wygodne umawianie wizyt online, lekarzom zarządzanie swoim grafikiem oraz administratorowi pełną kontrolę nad przychodnią.

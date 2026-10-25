@@ -21,7 +21,7 @@ try {
         echo "</ul>";
 
         // Sprawdzenie czy są użytkownicy testowi
-        $stmtUsers = $pdo->query("SELECT first_name, last_name, role FROM users");
+        $stmtUsers = $pdo->query("SELECT imie, nazwisko, rola FROM uzytkownicy");
         $users = $stmtUsers->fetchAll(PDO::FETCH_ASSOC);
         
         echo "<h3>Użytkownicy w systemie: " . count($users) . "</h3>";
