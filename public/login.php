@@ -1,4 +1,4 @@
-<?php require_once DIR . '/../src/templates/header.php'; ?>
+<?php require_once __DIR__ . '/../src/templates/header.php'; ?>
 
 <div class="row justify-content-center mt-5">
     <div class="col-md-5">
@@ -34,4 +34,4 @@
     </div>
 </div>
 
-<?php require_once DIR . '/../src/templates/footer.php'; ?>
+<?php require_once __DIR__ . '/../src/templates/footer.php'; ?>

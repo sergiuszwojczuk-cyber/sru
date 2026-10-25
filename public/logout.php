@@ -1,6 +1,6 @@
 <?php
 // public/logout.php
-require_once DIR . '/../src/config/session.php';
+require_once __DIR__ . '/../src/config/session.php';
 
 // Wyczyść wszystkie zmienne sesji
 $_SESSION = array();

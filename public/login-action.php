@@ -1,7 +1,7 @@
 <?php
 // public/login-action.php
-require_once DIR . '/../src/config/session.php';
-require_once DIR . '/../src/config/database.php';
+require_once __DIR__ . '/../src/config/session.php';
+require_once __DIR__ . '/../src/config/database.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: login.php");
