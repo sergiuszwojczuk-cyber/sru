@@ -28,6 +28,13 @@
                 <li><a href="index.php">Strona główna</a></li>
                 <?php if (isLoggedIn()): ?>
                     <li><span class="nav-welcome"><?= htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['email'], ENT_QUOTES, 'UTF-8') ?></span></li>
+                    <li><a href="profile.php">Mój profil</a></li>
+                    <?php if (hasRole('pracownik')): ?>
+                        <li><a href="pracownik.php">Panel pracownika</a></li>
+                    <?php endif; ?>
+                    <?php if (hasRole('administrator')): ?>
+                        <li><a href="admin.php">Panel administratora</a></li>
+                    <?php endif; ?>
                     <li>
                         <form action="logout.php" method="post" class="nav-form">
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken(), ENT_QUOTES, 'UTF-8') ?>">

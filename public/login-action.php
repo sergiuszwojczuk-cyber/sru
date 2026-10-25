@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../src/config/session.php';
 require_once __DIR__ . '/../src/config/database.php';
+require_once __DIR__ . '/../src/models/LoginThrottle.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: login.php', true, 303);
@@ -24,30 +25,41 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $password === '') {
 
 try {
     $pdo = getDbConnection();
+    $ip = filter_var($_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP) ?: 'unknown';
+    $buckets = loginThrottleKeys($email, $ip);
+
+    if (isLoginThrottled($pdo, $buckets)) {
+        $_SESSION['error'] = 'Zbyt wiele nieudanych prób. Odczekaj 15 minut i spróbuj ponownie.';
+        header('Location: login.php', true, 303);
+        exit;
+    }
 
     $stmt = $pdo->prepare('SELECT id, imie, nazwisko, email, haslo, rola FROM uzytkownicy WHERE email = ? AND czy_aktywny = 1 LIMIT 1');
     $stmt->execute([$email]);
     $user = $stmt->fetch();
 
     if ($user && password_verify($password, $user['haslo'])) {
+        if (password_needs_rehash($user['haslo'], PASSWORD_DEFAULT)) {
+            $update = $pdo->prepare('UPDATE uzytkownicy SET haslo = ? WHERE id = ?');
+            $update->execute([password_hash($password, PASSWORD_DEFAULT), $user['id']]);
+        }
+        clearLoginFailures($pdo, $buckets[0]['key']);
         session_regenerate_id(true);
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['email'] = $user['email'];
         $_SESSION['role'] = $user['rola'];
+        $_SESSION['session_created'] = time();
+        $_SESSION['last_activity'] = time();
 
         $_SESSION['user_name'] = ($user['rola'] === 'lekarz' ? 'lek. ' : '')
             . $user['imie'] . ' ' . $user['nazwisko'];
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
-        if (password_needs_rehash($user['haslo'], PASSWORD_DEFAULT)) {
-            $update = $pdo->prepare('UPDATE uzytkownicy SET haslo = ? WHERE id = ?');
-            $update->execute([password_hash($password, PASSWORD_DEFAULT), $user['id']]);
-        }
-
         header('Location: index.php', true, 303);
         exit;
     }
 
+    recordLoginFailure($pdo, $buckets);
     $_SESSION['error'] = 'Nieprawidłowy adres e-mail lub hasło.';
     header('Location: login.php', true, 303);
     exit;

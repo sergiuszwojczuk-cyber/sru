@@ -252,6 +252,15 @@ a:hover { color: var(--teal); }
 .auth-layout-register { align-items: start; }
 .auth-layout-register .auth-intro { position: sticky; top: 35px; padding-top: 80px; }
 .auth-layout-register .auth-card { padding: 32px; }
+.account-layout { margin-top: 65px; }
+.profile-grid { display: grid; grid-template-columns: 1.15fr .85fr; align-items: start; gap: 20px; }
+.admin-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+.admin-stats .feature-card { min-height: 145px; }
+.admin-stats .feature-card h2 { margin: 15px 0 4px; font: 800 30px "Manrope", sans-serif; letter-spacing: -1px; }
+.admin-stats .feature-card p { margin: 0; }
+.auth-card .table { --bs-table-bg: transparent; margin-bottom: 0; color: var(--ink); font-size: 13px; }
+.auth-card .table th { color: var(--muted); font-size: 11px; letter-spacing: .3px; text-transform: uppercase; white-space: nowrap; }
+.auth-card .table td { min-width: 95px; }
 
 .dashboard-hero {
     min-height: 340px;
@@ -290,6 +299,8 @@ a:hover { color: var(--teal); }
     .specialty-grid { grid-template-columns: repeat(3, 1fr); }
     .auth-layout { gap: 40px; }
     .dashboard-hero { gap: 30px; padding: 36px; }
+    .profile-grid { grid-template-columns: 1fr; }
+    .admin-stats { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 700px) {
@@ -314,6 +325,8 @@ a:hover { color: var(--teal); }
     .contact-band { width: min(100% - 32px, 560px); align-items: flex-start; flex-direction: column; margin-bottom: 55px; padding: 28px; }
     .feature-grid { grid-template-columns: 1fr; }
     .feature-card { min-height: 170px; }
+    .admin-stats { grid-template-columns: repeat(2, 1fr); }
+    .admin-stats .feature-card { min-height: 130px; }
     .auth-layout { width: min(100% - 32px, 520px); grid-template-columns: 1fr; gap: 28px; margin: 43px auto 58px; }
     .auth-intro h1 { max-width: 480px; font-size: 40px; }
     .auth-intro > p:not(.eyebrow) { margin-top: 12px; }

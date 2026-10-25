@@ -1,20 +1,24 @@
-<?php require_once __DIR__ . '/../src/templates/header.php'; ?>
+<?php
+require_once __DIR__ . '/../src/config/session.php';
+$pageTitle = 'Strona główna | Przychodnia Pochodnia';
+require_once __DIR__ . '/../src/templates/header.php';
+?>
 
 <?php if (isLoggedIn()): ?>
     <?php
     $dashboard = match ($_SESSION['role'] ?? '') {
-        'pacjent' => [
-            'label' => 'Panel pacjenta',
+        'pacjent', 'klient' => [
+            'label' => 'Panel klienta',
             'cards' => [
                 ['Dane pacjenta', 'Twoje konto jest aktywne. W razie potrzeby skontaktuj się z rejestracją, aby zaktualizować dane.'],
                 ['Wizyty', 'Internetowa rezerwacja wizyt będzie dostępna po uruchomieniu modułu rezerwacji.'],
             ],
         ],
-        'lekarz' => [
-            'label' => 'Panel lekarza',
+        'lekarz', 'pracownik' => [
+            'label' => 'Panel pracownika',
             'cards' => [
-                ['Profil lekarza', 'Twoje konto personelu jest aktywne. W sprawie aktualizacji danych skontaktuj się z administratorem.'],
-                ['Grafik i wizyty', 'Zarządzanie grafikiem i wizytami będzie dostępne po uruchomieniu odpowiedniego modułu.'],
+                ['Profil pracownika', 'Twoje konto personelu jest aktywne. W sprawie aktualizacji danych skontaktuj się z administratorem.'],
+                ['Grafik i wizyty', 'Sprawdź swój grafik i informacje o dostępności w panelu pracownika.'],
             ],
         ],
         'administrator' => [
@@ -41,7 +45,7 @@
         </div>
         <div class="role-card">
             <span class="role-label">Zalogowano jako</span>
-            <strong><?= htmlspecialchars(ucfirst($_SESSION['role'] ?? ''), ENT_QUOTES, 'UTF-8') ?></strong>
+            <strong><?= htmlspecialchars(userRoleLabel($_SESSION['role'] ?? ''), ENT_QUOTES, 'UTF-8') ?></strong>
             <span class="role-email"><?= htmlspecialchars($_SESSION['email'] ?? '', ENT_QUOTES, 'UTF-8') ?></span>
         </div>
     </section>

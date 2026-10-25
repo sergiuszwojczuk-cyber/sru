@@ -15,6 +15,7 @@ if (!hasValidCsrfToken($_POST['csrf_token'] ?? null)) {
 
 $email = isset($_POST['email']) && is_string($_POST['email']) ? strtolower(trim($_POST['email'])) : '';
 $password = isset($_POST['password']) && is_string($_POST['password']) ? $_POST['password'] : '';
+$passwordConfirm = isset($_POST['password_confirm']) && is_string($_POST['password_confirm']) ? $_POST['password_confirm'] : '';
 $imie = isset($_POST['imie']) && is_string($_POST['imie']) ? trim($_POST['imie']) : '';
 $nazwisko = isset($_POST['nazwisko']) && is_string($_POST['nazwisko']) ? trim($_POST['nazwisko']) : '';
 $telefon = isset($_POST['telefon']) && is_string($_POST['telefon']) ? trim($_POST['telefon']) : '';
@@ -30,6 +31,8 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 254) {
     $_SESSION['error'] = 'Podaj prawidłowy adres e-mail.';
 } elseif (strlen($password) < 8 || strlen($password) > 72) {
     $_SESSION['error'] = 'Hasło musi mieć co najmniej 8 znaków i nie może przekraczać 72 bajtów.';
+} elseif (!hash_equals($password, $passwordConfirm)) {
+    $_SESSION['error'] = 'Hasła nie są zgodne.';
 } elseif ($imie === '' || strlen($imie) > 80 || $nazwisko === '' || strlen($nazwisko) > 80) {
     $_SESSION['error'] = 'Podaj prawidłowe imię i nazwisko.';
 } elseif (strlen($telefon) > 30 || strlen($adres) > 255 || strlen($miasto) > 100 || strlen($kod) > 12) {

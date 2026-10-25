@@ -32,6 +32,10 @@ require_once __DIR__ . '/../src/templates/header.php';
                 <input class="form-control" id="password" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="72" required aria-describedby="passwordHelp">
                 <div class="form-text" id="passwordHelp">Co najmniej 8 znaków, maksymalnie 72 bajty.</div>
             </div>
+            <div class="mb-4">
+                <label class="form-label" for="password_confirm">Powtórz hasło *</label>
+                <input class="form-control" id="password_confirm" type="password" name="password_confirm" autocomplete="new-password" minlength="8" maxlength="72" required>
+            </div>
 
             <h3 class="form-section-title">Dane osobowe</h3>
             <div class="row">

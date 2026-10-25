@@ -16,6 +16,15 @@ CREATE TABLE IF NOT EXISTS uzytkownicy (
     KEY idx_users_name (nazwisko, imie)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS auth_login_attempts (
+    bucket_key CHAR(64) NOT NULL,
+    failed_attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    window_started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    locked_until DATETIME DEFAULT NULL,
+    PRIMARY KEY (bucket_key),
+    KEY idx_auth_login_lock (locked_until)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS profil_pacjenta (
     uzytkownik_id INT UNSIGNED NOT NULL,
     data_urodzenia DATE DEFAULT NULL,

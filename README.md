@@ -16,9 +16,13 @@
 
 ## Role użytkowników
 
-- **Pacjent** – rejestracja, logowanie, przeglądanie oferty, rezerwacja wizyt, zarządzanie swoimi wizytami, anulowanie rezerwacji
-- **Lekarz** – przeglądanie swoich wizyt, zmiana statusu wizyty, historia pacjentów
-- **Administrator** – pełna administracja systemem (zarządzanie lekarzami, specjalizacjami, grafikiem, użytkownikami i rezerwacjami)
+- **Klient (pacjent)** – rejestracja, logowanie, edycja własnego profilu i zmiana hasła
+- **Pracownik (lekarz)** – dostęp do własnego grafiku dostępności i edycja własnego profilu
+- **Administrator** – dostęp do panelu administracyjnego i listy kont użytkowników
+
+Nazwy ról przechowywane w bazie (`pacjent`, `lekarz`, `administrator`) pozostają
+zgodne z dotychczasowym schematem. Aplikacja prezentuje je odpowiednio jako
+klienta, pracownika i administratora; każdy panel weryfikuje rolę po stronie PHP.
 
 ## Planowane:
 
@@ -29,7 +33,13 @@
 - Zarządzanie grafikiem lekarzy
 - Panele dla każdej roli
 - Bezpieczne przechowywanie haseł (`password_hash()`)
-- Walidacja danych po stronie serwera
+- Weryfikacja haseł (`password_verify()`) i zmiana hasła po podaniu aktualnego
+- Walidacja danych po stronie serwera i ochrona formularzy tokenami CSRF
+- Ograniczanie prób logowania: blokada adresu e-mail po 5 i adresu IP po 20
+  błędnych próbach w 15-minutowym oknie
+- Bezpieczne sesje z limitem bezczynności, zmianą identyfikatora po logowaniu
+  i wylogowaniem metodą POST
+- Ochrona panelu pracownika i administratora oraz edycja własnego profilu
 - Responsywny interfejs
 
 ## Baza danych
@@ -46,7 +56,9 @@ Skrypt tworzy brakujące tabele i dodaje przykładowe konta oraz ofertę. Nie us
 tabel ani istniejących danych. Jest to schemat startowy, a nie migracja
 poprzedniej wersji bazy: nową instalację uruchom na pustej bazie. Przed zmianą
 już używanej bazy przygotuj i przetestuj osobną migrację oraz kopię zapasową;
-ponowne uruchomienie skryptu nie zmieni istniejących tabel.
+ponowne uruchomienie skryptu nie zmieni istniejących tabel. Przy ponownym
+uruchomieniu skrypt utworzy brakującą tabelę `auth_login_attempts`, wymaganą
+przez ograniczanie prób logowania.
 
 Ustaw zmienne środowiskowe `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`,
 `MYSQLPASSWORD` i `MYSQLDATABASE`, a następnie uruchom instalację z terminala:
