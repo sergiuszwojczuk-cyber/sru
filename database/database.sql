@@ -1,8 +1,4 @@
-SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS historia_statusow_wizyt, wizyty, wyjatki_grafiku_lekarza, dostepnosc_lekarza, lekarz_usluga, uslugi, lekarz_placowka, lekarz_specjalizacja, specjalizacje, placowki, profil_lekarza, profil_pacjenta, uzytkownicy;
-SET FOREIGN_KEY_CHECKS = 1;
-
-CREATE TABLE uzytkownicy (
+CREATE TABLE IF NOT EXISTS uzytkownicy (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     imie VARCHAR(80) NOT NULL,
     nazwisko VARCHAR(80) NOT NULL,
@@ -20,7 +16,7 @@ CREATE TABLE uzytkownicy (
     KEY idx_users_name (nazwisko, imie)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE profil_pacjenta (
+CREATE TABLE IF NOT EXISTS profil_pacjenta (
     uzytkownik_id INT UNSIGNED NOT NULL,
     data_urodzenia DATE DEFAULT NULL,
     adres VARCHAR(255) DEFAULT NULL,
@@ -35,7 +31,7 @@ CREATE TABLE profil_pacjenta (
         FOREIGN KEY (uzytkownik_id) REFERENCES uzytkownicy (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE profil_lekarza (
+CREATE TABLE IF NOT EXISTS profil_lekarza (
     uzytkownik_id INT UNSIGNED NOT NULL,
     numer_pwz VARCHAR(40) NOT NULL,
     biogram TEXT DEFAULT NULL,
@@ -48,7 +44,7 @@ CREATE TABLE profil_lekarza (
         FOREIGN KEY (uzytkownik_id) REFERENCES uzytkownicy (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE placowki (
+CREATE TABLE IF NOT EXISTS placowki (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     nazwa VARCHAR(160) NOT NULL,
     telefon VARCHAR(30) DEFAULT NULL,
@@ -64,7 +60,7 @@ CREATE TABLE placowki (
     KEY idx_clinics_city_active (miasto, czy_aktywny)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE specjalizacje (
+CREATE TABLE IF NOT EXISTS specjalizacje (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     nazwa VARCHAR(100) NOT NULL,
     opis TEXT DEFAULT NULL,
@@ -73,7 +69,7 @@ CREATE TABLE specjalizacje (
     UNIQUE KEY uq_specializations_name (nazwa)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE lekarz_specjalizacja (
+CREATE TABLE IF NOT EXISTS lekarz_specjalizacja (
     lekarz_id INT UNSIGNED NOT NULL,
     specjalizacja_id INT UNSIGNED NOT NULL,
     PRIMARY KEY (lekarz_id, specjalizacja_id),
@@ -84,7 +80,7 @@ CREATE TABLE lekarz_specjalizacja (
         FOREIGN KEY (specjalizacja_id) REFERENCES specjalizacje (id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE lekarz_placowka (
+CREATE TABLE IF NOT EXISTS lekarz_placowka (
     lekarz_id INT UNSIGNED NOT NULL,
     placowka_id INT UNSIGNED NOT NULL,
     PRIMARY KEY (lekarz_id, placowka_id),
@@ -95,7 +91,7 @@ CREATE TABLE lekarz_placowka (
         FOREIGN KEY (placowka_id) REFERENCES placowki (id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE uslugi (
+CREATE TABLE IF NOT EXISTS uslugi (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     specjalizacja_id INT UNSIGNED NOT NULL,
     nazwa VARCHAR(160) NOT NULL,
@@ -114,7 +110,7 @@ CREATE TABLE uslugi (
     CONSTRAINT chk_services_price CHECK (cena >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE lekarz_usluga (
+CREATE TABLE IF NOT EXISTS lekarz_usluga (
     lekarz_id INT UNSIGNED NOT NULL,
     usluga_id INT UNSIGNED NOT NULL,
     PRIMARY KEY (lekarz_id, usluga_id),
@@ -125,7 +121,7 @@ CREATE TABLE lekarz_usluga (
         FOREIGN KEY (usluga_id) REFERENCES uslugi (id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE dostepnosc_lekarza (
+CREATE TABLE IF NOT EXISTS dostepnosc_lekarza (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     lekarz_id INT UNSIGNED NOT NULL,
     placowka_id INT UNSIGNED NOT NULL,
@@ -148,7 +144,7 @@ CREATE TABLE dostepnosc_lekarza (
         CHECK (obowiazuje_do IS NULL OR obowiazuje_od IS NULL OR obowiazuje_do >= obowiazuje_od)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE wyjatki_grafiku_lekarza (
+CREATE TABLE IF NOT EXISTS wyjatki_grafiku_lekarza (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     lekarz_id INT UNSIGNED NOT NULL,
     placowka_id INT UNSIGNED NOT NULL,
@@ -170,7 +166,7 @@ CREATE TABLE wyjatki_grafiku_lekarza (
         )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE wizyty (
+CREATE TABLE IF NOT EXISTS wizyty (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     pacjent_id INT UNSIGNED NOT NULL,
     lekarz_id INT UNSIGNED NOT NULL,
@@ -217,7 +213,7 @@ CREATE TABLE wizyty (
     CONSTRAINT chk_appointments_price CHECK (cena >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE historia_statusow_wizyt (
+CREATE TABLE IF NOT EXISTS historia_statusow_wizyt (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     wizyta_id INT UNSIGNED NOT NULL,
     poprzedni_status ENUM('zaplanowana', 'potwierdzona', 'zarejestrowana', 'zakonczona', 'anulowana', 'nieobecnosc')

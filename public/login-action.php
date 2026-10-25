@@ -1,48 +1,59 @@
 <?php
-// public/login-action.php
 require_once __DIR__ . '/../src/config/session.php';
 require_once __DIR__ . '/../src/config/database.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header("Location: login.php");
-    exit();
+    header('Location: login.php', true, 303);
+    exit;
 }
 
-$email = trim($_POST['email'] ?? '');
-$password = $_POST['password'] ?? '';
+if (!hasValidCsrfToken($_POST['csrf_token'] ?? null)) {
+    $_SESSION['error'] = 'Sesja formularza wygasła. Spróbuj ponownie.';
+    header('Location: login.php', true, 303);
+    exit;
+}
+
+$email = isset($_POST['email']) && is_string($_POST['email']) ? strtolower(trim($_POST['email'])) : '';
+$password = isset($_POST['password']) && is_string($_POST['password']) ? $_POST['password'] : '';
+
+if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $password === '') {
+    $_SESSION['error'] = 'Nieprawidłowy adres e-mail lub hasło.';
+    header('Location: login.php', true, 303);
+    exit;
+}
 
 try {
     $pdo = getDbConnection();
 
-    // Szukamy użytkownika o podanym mailu, który jest aktywny
-    $stmt = $pdo->prepare("SELECT id, imie, nazwisko, email, haslo, rola FROM uzytkownicy WHERE email = ? AND czy_aktywny = 1");
+    $stmt = $pdo->prepare('SELECT id, imie, nazwisko, email, haslo, rola FROM uzytkownicy WHERE email = ? AND czy_aktywny = 1 LIMIT 1');
     $stmt->execute([$email]);
     $user = $stmt->fetch();
 
-    // Weryfikacja hasła
     if ($user && password_verify($password, $user['haslo'])) {
-        // Logowanie udane! Zapisujemy dane do sesji
+        session_regenerate_id(true);
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['email'] = $user['email'];
-        $_SESSION['role'] = $user['rola']; // pacjent / lekarz / administrator
+        $_SESSION['role'] = $user['rola'];
 
-        // Budujemy nazwę wyświetlaną na pasku
-        if ($user['rola'] === 'lekarz') {
-            $_SESSION['user_name'] = 'lek. ' . $user['imie'] . ' ' . $user['nazwisko'];
-        } else {
-            $_SESSION['user_name'] = $user['imie'] . ' ' . $user['nazwisko'];
+        $_SESSION['user_name'] = ($user['rola'] === 'lekarz' ? 'lek. ' : '')
+            . $user['imie'] . ' ' . $user['nazwisko'];
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+
+        if (password_needs_rehash($user['haslo'], PASSWORD_DEFAULT)) {
+            $update = $pdo->prepare('UPDATE uzytkownicy SET haslo = ? WHERE id = ?');
+            $update->execute([password_hash($password, PASSWORD_DEFAULT), $user['id']]);
         }
 
-        header("Location: index.php");
-        exit();
-    } else {
-        $_SESSION['error'] = "Nieprawidłowy adres e-mail lub hasło.";
-        header("Location: login.php");
-        exit();
+        header('Location: index.php', true, 303);
+        exit;
     }
 
+    $_SESSION['error'] = 'Nieprawidłowy adres e-mail lub hasło.';
+    header('Location: login.php', true, 303);
+    exit;
 } catch (Exception $e) {
-    $_SESSION['error'] = "Błąd systemu: " . $e->getMessage();
-    header("Location: login.php");
-    exit();
+    error_log('Login failed: ' . $e->getMessage());
+    $_SESSION['error'] = 'Logowanie jest chwilowo niedostępne. Spróbuj ponownie później.';
+    header('Location: login.php', true, 303);
+    exit;
 }

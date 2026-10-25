@@ -1,7 +1,8 @@
 <?php
 // src/config/database.php
 
-function getDbConnection() {
+function getDbConnection(): PDO
+{
     $host = getenv('MYSQLHOST') ?: 'localhost';
     $port = getenv('MYSQLPORT') ?: '3306';
     $user = getenv('MYSQLUSER') ?: 'root';
@@ -18,6 +19,7 @@ function getDbConnection() {
         ]);
         return $pdo;
     } catch (PDOException $e) {
-        throw new Exception("Błąd połączenia z bazą danych Railway: " . $e->getMessage());
+        error_log('Database connection failed: ' . $e->getMessage());
+        throw new RuntimeException('Database connection failed.', 0, $e);
     }
 }

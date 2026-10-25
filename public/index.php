@@ -1,38 +1,126 @@
 <?php require_once __DIR__ . '/../src/templates/header.php'; ?>
 
-<div class="p-5 mb-4 bg-white rounded-3 shadow-sm mt-4">
-    <div class="container-fluid py-3">
-        <?php if (isLoggedIn()): ?>
-            <h1 class="display-5 fw-bold text-primary">Witaj, <?php echo htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['email']); ?>! 馃憢</h1>
-            <p class="col-md-8 fs-4">
-                Jeste艣 zalogowany jako: 
-                <span class="badge bg-success">
-                    <?php echo strtoupper(htmlspecialchars($_SESSION['role'])); ?>
-                </span>
-            </p>
-            <hr class="my-4">
-            
-            <?php if (hasRole('pacjent')): ?>
-                <p>Tw贸j system rezerwacji wizyt medycznych jest gotowy do dzia艂ania.</p>
-                <a class="btn btn-primary btn-lg" href="#" role="button">馃搮 Zarezerwuj wizyt臋 (Etap 3)</a>
-                <a class="btn btn-outline-primary btn-lg ms-2" href="#" role="button">Moje wizyty</a>
-            <?php elseif (hasRole('lekarz')): ?>
-                <p>Witaj w panelu lekarza. Zarz膮dzaj swoimi pacjentami i grafikiem wizyt.</p>
-                <a class="btn btn-info text-white btn-lg" href="#" role="button">馃搵 Zobacz m贸j grafik (Etap 3)</a>
-            <?php elseif (hasRole('administrator')): ?>
-                <p>Oto panel zarz膮dzania systemem Przychodni Pochodnia.</p>
-                <a class="btn btn-warning btn-lg" href="#" role="button">鈿欙笍 Panel Administratora (Etap 3)</a>
-            <?php endif; ?>
+<?php if (isLoggedIn()): ?>
+    <?php
+    $dashboard = match ($_SESSION['role'] ?? '') {
+        'pacjent' => [
+            'label' => 'Panel pacjenta',
+            'cards' => [
+                ['Dane pacjenta', 'Twoje konto jest aktywne. W razie potrzeby skontaktuj się z rejestracją, aby zaktualizować dane.'],
+                ['Wizyty', 'Internetowa rezerwacja wizyt będzie dostępna po uruchomieniu modułu rezerwacji.'],
+            ],
+        ],
+        'lekarz' => [
+            'label' => 'Panel lekarza',
+            'cards' => [
+                ['Profil lekarza', 'Twoje konto personelu jest aktywne. W sprawie aktualizacji danych skontaktuj się z administratorem.'],
+                ['Grafik i wizyty', 'Zarządzanie grafikiem i wizytami będzie dostępne po uruchomieniu odpowiedniego modułu.'],
+            ],
+        ],
+        'administrator' => [
+            'label' => 'Panel administratora',
+            'cards' => [
+                ['Konto administratora', 'Zalogowano do konta z uprawnieniami administratora systemu.'],
+                ['Zarządzanie przychodnią', 'Narzędzia do zarządzania personelem i wizytami będą dostępne po uruchomieniu odpowiedniego modułu.'],
+            ],
+        ],
+        default => [
+            'label' => 'Panel użytkownika',
+            'cards' => [
+                ['Twoje konto', 'Twoje konto jest aktywne.'],
+                ['Wizyty', 'Informacje o wizytach będą dostępne po uruchomieniu modułu rezerwacji.'],
+            ],
+        ],
+    };
+    ?>
+    <section class="dashboard-hero">
+        <div class="dashboard-copy">
+            <p class="eyebrow"><?= htmlspecialchars($dashboard['label'], ENT_QUOTES, 'UTF-8') ?></p>
+            <h1>Dzień dobry, <?= htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['email'], ENT_QUOTES, 'UTF-8') ?></h1>
+            <p class="lead">Witamy w systemie Przychodni Pochodnia.</p>
+        </div>
+        <div class="role-card">
+            <span class="role-label">Zalogowano jako</span>
+            <strong><?= htmlspecialchars(ucfirst($_SESSION['role'] ?? ''), ENT_QUOTES, 'UTF-8') ?></strong>
+            <span class="role-email"><?= htmlspecialchars($_SESSION['email'] ?? '', ENT_QUOTES, 'UTF-8') ?></span>
+        </div>
+    </section>
 
-        <?php else: ?>
-            <h1 class="display-5 fw-bold text-primary">Przychodnia Pochodnia 鈿曪笍</h1>
-            <p class="col-md-8 fs-4">Innowacyjny system rezerwacji wizyt lekarskich online. Szybko, wygodnie i bez kolejek.</p>
-            <hr class="my-4">
-            <p>Zaloguj si臋 na swoje konto lub za艂贸偶 nowe, aby zarezerwowa膰 wizyt臋 u specjalisty.</p>
-            <a class="btn btn-primary btn-lg" href="login.php" role="button">Zaloguj si臋</a>
-            <a class="btn btn-outline-secondary btn-lg ms-2" href="register.php" role="button">Za艂贸偶 konto</a>
-        <?php endif; ?>
-    </div>
-</div>
+    <section class="content-section">
+        <div class="section-heading">
+            <p class="eyebrow">Twoje konto</p>
+            <h2>Wszystko, czego potrzebujesz, w jednym miejscu</h2>
+        </div>
+        <div class="feature-grid">
+            <?php foreach ($dashboard['cards'] as $index => [$title, $description]): ?>
+            <article class="feature-card">
+                <span class="feature-number"><?= sprintf('%02d', $index + 1) ?></span>
+                <h3><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></h3>
+                <p><?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8') ?></p>
+            </article>
+            <?php endforeach; ?>
+            <article class="feature-card">
+                <span class="feature-number">03</span>
+                <h3>Kontakt z przychodnią</h3>
+                <p>Zadzwoń pod numer <a href="tel:+48221234567">22 123 45 67</a> lub napisz na <a href="mailto:kontakt@pochodnia.pl">kontakt@pochodnia.pl</a>.</p>
+            </article>
+        </div>
+    </section>
+<?php else: ?>
+    <section class="hero">
+        <div class="hero-copy">
+            <p class="eyebrow">Przychodnia Pochodnia · Warszawa</p>
+            <h1>Zdrowie zaczyna się od dobrej opieki.</h1>
+            <p class="lead">Poznaj zespół specjalistów, załóż konto pacjenta i miej najważniejsze informacje zawsze pod ręką.</p>
+            <div class="hero-actions">
+                <a class="button button-primary" href="register.php">Załóż konto pacjenta</a>
+                <a class="button button-secondary" href="login.php">Zaloguj się</a>
+            </div>
+            <div class="hero-note">
+                <span class="status-dot" aria-hidden="true"></span>
+                <span>Opieka w jednym, wygodnym miejscu</span>
+            </div>
+        </div>
+        <div class="hero-panel" aria-label="Informacje o przychodni">
+            <div class="hero-panel-top">
+                <span class="panel-kicker">Dobra opieka, blisko Ciebie</span>
+                <span class="panel-mark" aria-hidden="true">P</span>
+            </div>
+            <div class="panel-line"></div>
+            <p class="panel-caption">Wspieramy Cię na każdym etapie dbania o zdrowie.</p>
+            <div class="panel-stats">
+                <div><strong>5</strong><span>specjalizacji</span></div>
+                <div><strong>Pon–Pt</strong><span>dni przyjęć</span></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content-section">
+        <div class="section-heading">
+            <p class="eyebrow">Nasza oferta</p>
+            <h2>Specjaliści, którym możesz zaufać</h2>
+            <p>Wybierz zakres opieki dopasowany do swoich potrzeb.</p>
+        </div>
+        <div class="specialty-grid">
+            <article class="specialty-card"><span>01</span><h3>Kardiologia</h3><p>Profilaktyka i diagnostyka chorób serca.</p></article>
+            <article class="specialty-card"><span>02</span><h3>Okulistyka</h3><p>Badania wzroku i konsultacje okulistyczne.</p></article>
+            <article class="specialty-card"><span>03</span><h3>Pediatria</h3><p>Opieka i konsultacje dla dzieci.</p></article>
+            <article class="specialty-card"><span>04</span><h3>Medycyna rodzinna</h3><p>Podstawowa opieka dla całej rodziny.</p></article>
+            <article class="specialty-card"><span>05</span><h3>Dermatologia</h3><p>Konsultacje dotyczące zdrowia skóry.</p></article>
+        </div>
+    </section>
+
+    <section class="contact-band">
+        <div>
+            <p class="eyebrow">Jesteśmy do Twojej dyspozycji</p>
+            <h2>Masz pytanie? Chętnie pomożemy.</h2>
+        </div>
+        <div class="contact-details">
+            <a href="tel:+48221234567">22 123 45 67</a>
+            <a href="mailto:kontakt@pochodnia.pl">kontakt@pochodnia.pl</a>
+            <span>ul. Zdrowa 10, Warszawa</span>
+        </div>
+    </section>
+<?php endif; ?>
 
 <?php require_once __DIR__ . '/../src/templates/footer.php'; ?>

@@ -1,36 +1,33 @@
 <?php
-// public/setup-db.php
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
+
 require_once __DIR__ . '/../src/config/database.php';
 
 try {
-    $pdo = getDbConnection();
-    
     $sqlFile = __DIR__ . '/../database/database.sql';
-    if (!file_exists($sqlFile)) {
-        die("Błąd: Nie znaleziono pliku database/database.sql");
+    if (!is_file($sqlFile) || !is_readable($sqlFile)) {
+        throw new RuntimeException('Nie znaleziono pliku database/database.sql.');
     }
 
     $sql = file_get_contents($sqlFile);
-
-    // Wyłączenie sprawdzania kluczy obcych na czas wgrywania
-    $pdo->exec("SET FOREIGN_KEY_CHECKS = 0;");
-
-    // Dzielimy plik SQL na pojedyncze komendy po średnikach
-    $queries = array_filter(array_map('trim', explode(';', $sql)));
-
-    foreach ($queries as $query) {
-        if (!empty($query)) {
-            $pdo->exec($query);
-        }
+    if ($sql === false) {
+        throw new RuntimeException('Nie można odczytać pliku database/database.sql.');
     }
 
-    $pdo->exec("SET FOREIGN_KEY_CHECKS = 1;");
+    $pdo = getDbConnection();
+    $queries = array_filter(array_map('trim', explode(';', $sql)));
+    foreach ($queries as $query) {
+        $pdo->exec($query);
+    }
 
-    echo "<h1 style='color: green;'>✅ SUKCES! Baza danych została w 100% poprawnie utworzona na Railway.</h1>";
-    echo "<p>Wszystkie tabele i dane testowe są gotowe.</p>";
-    echo "<a href='test-db.php'>Sprawdź diagnostykę bazy</a> | <a href='index.php'>Strona główna</a>";
-
+    echo "Schemat bazy i dane demonstracyjne zostały przygotowane.\n";
+    echo "Konto administratora: admin@pochodnia.pl (hasło: demo1234).\n";
+    echo "Zmień hasło demonstracyjne przed użyciem produkcyjnym.\n";
 } catch (Exception $e) {
-    echo "<h1 style='color: red;'>❌ Błąd instalacji bazy danych:</h1>";
-    echo "<pre>" . $e->getMessage() . "</pre>";
+    error_log('Database setup failed: ' . $e->getMessage());
+    fwrite(STDERR, "Nie udało się przygotować bazy danych. Sprawdź konfigurację połączenia i logi aplikacji.\n");
+    exit(1);
 }
