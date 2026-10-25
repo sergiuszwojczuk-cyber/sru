@@ -85,6 +85,10 @@ a:hover { color: var(--teal); }
 .nav-toggle { display: none; }
 .site-main { min-height: calc(100vh - 190px); }
 
+@media (min-width: 701px) {
+    .nav-collapse.collapse:not(.show) { display: block; }
+}
+
 .button {
     display: inline-flex;
     min-height: 48px;
