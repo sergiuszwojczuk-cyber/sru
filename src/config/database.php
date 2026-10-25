@@ -2,8 +2,6 @@
 // src/config/database.php
 
 function getDbConnection() {
-    // Railway podaje dane do bazy w zmiennych środowiskowych
-    // Jeśli ich nie ma (np. lokalnie), używamy domyślnych
     $host = getenv('MYSQLHOST') ?: 'localhost';
     $port = getenv('MYSQLPORT') ?: '3306';
     $user = getenv('MYSQLUSER') ?: 'root';
@@ -20,6 +18,6 @@ function getDbConnection() {
         ]);
         return $pdo;
     } catch (PDOException $e) {
-        throw new Exception("Błąd połączenia z bazą: " . $e->getMessage());
+        throw new Exception("Błąd połączenia z bazą danych Railway: " . $e->getMessage());
     }
 }
