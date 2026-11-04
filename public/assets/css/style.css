@@ -258,6 +258,19 @@ a:hover { color: var(--teal); }
 .admin-stats .feature-card { min-height: 145px; }
 .admin-stats .feature-card h2 { margin: 15px 0 4px; font: 800 30px "Manrope", sans-serif; letter-spacing: -1px; }
 .admin-stats .feature-card p { margin: 0; }
+.admin-section { margin-bottom: 22px; scroll-margin-top: 20px; }
+.admin-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; align-items: end; }
+.admin-form-grid .form-control { min-width: 0; }
+.admin-form-wide { grid-column: 1 / -1; }
+.admin-form-actions, .admin-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.admin-actions { min-width: 155px; }
+.admin-actions form { margin: 0; }
+.admin-table-wrap { margin-top: 20px; }
+.admin-checkbox { display: flex; align-items: center; gap: 9px; min-height: 42px; color: var(--ink); font-size: 13px; font-weight: 600; }
+.admin-checkbox input { width: 17px; height: 17px; accent-color: var(--teal); }
+.admin-help { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+.button-danger { color: #a53d3d; border-color: #efcaca; }
+.button-danger:hover { color: #842d2d; background: #fff1f1; border-color: #e8aaaa; }
 .auth-card .table { --bs-table-bg: transparent; margin-bottom: 0; color: var(--ink); font-size: 13px; }
 .auth-card .table th { color: var(--muted); font-size: 11px; letter-spacing: .3px; text-transform: uppercase; white-space: nowrap; }
 .auth-card .table td { min-width: 95px; }
@@ -301,6 +314,8 @@ a:hover { color: var(--teal); }
     .dashboard-hero { gap: 30px; padding: 36px; }
     .profile-grid { grid-template-columns: 1fr; }
     .admin-stats { grid-template-columns: repeat(2, 1fr); }
+    .admin-form-grid { grid-template-columns: 1fr; }
+    .admin-form-wide { grid-column: auto; }
 }
 
 @media (max-width: 700px) {
@@ -327,6 +342,7 @@ a:hover { color: var(--teal); }
     .feature-card { min-height: 170px; }
     .admin-stats { grid-template-columns: repeat(2, 1fr); }
     .admin-stats .feature-card { min-height: 130px; }
+    .admin-actions { min-width: 0; }
     .auth-layout { width: min(100% - 32px, 520px); grid-template-columns: 1fr; gap: 28px; margin: 43px auto 58px; }
     .auth-intro h1 { max-width: 480px; font-size: 40px; }
     .auth-intro > p:not(.eyebrow) { margin-top: 12px; }

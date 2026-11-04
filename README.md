@@ -4,12 +4,16 @@
 - Sergiusz Wojczuk, klasa 5KT
 - Jakub Goławski, klasa 5KT
 
+### Link do strony
+https://sru-production.up.railway.app/login.php
+
 ### Opis
 Projekt systemu przychodni z kontami pacjentów, personelem, placówkami,
 specjalizacjami, usługami i modelem wizyt. Aplikacja udostępnia rejestrację,
 logowanie, profile, zmianę hasła, panele ról, listę kont administratorowi oraz
-podgląd grafiku pracownika. Internetowy moduł rezerwowania i zarządzania
-wizytami nie jest jeszcze dostępny w interfejsie.
+podgląd grafiku pracownika. Administrator zarządza kategoriami (specjalizacjami)
+i usługami, kontami pracowników oraz przegląda zapisane wizyty. Internetowy
+moduł rezerwowania wizyt przez pacjenta nie jest jeszcze dostępny.
 
 ### Technologie
 - PHP 8.1+ i PDO
@@ -35,6 +39,15 @@ cenę i czas trwania z chwili rezerwacji. Triggery SQL automatycznie zapisują
 utworzenie wizyty i zmianę jej statusu. Aby przypisać zmianę do użytkownika,
 aplikacja powinna ustawić `@aktor_uzytkownik_id` na tym samym połączeniu PDO
 przed zapisem.
+
+Panel administratora jest dostępny po zalogowaniu kontem z rolą
+`administrator` pod adresem `public/admin.php`. Umożliwia dodawanie, edycję i
+usuwanie kategorii oraz usług, ustawianie ceny, czasu trwania i aktywności
+usługi, tworzenie i dezaktywowanie kont lekarzy, przegląd wizyt oraz kont.
+Nowy lekarz jest przypisywany do wybranej kategorii, aktywnych usług tej
+kategorii i pierwszej aktywnej placówki. Usługi i kategorie powiązane z
+zachowanymi wizytami nie mogą być usunięte; klucze obce chronią historię przed
+utratą. Operacje panelu wymagają tokenu CSRF i są sprawdzane po stronie serwera.
 
 Dostępność cykliczna może mieć zakres dat, a wyjątki grafiku obsługują dzień
 niedostępności lub dodatkowy przedział godzin. Indeksy blokują dwie aktywne
