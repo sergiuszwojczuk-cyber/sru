@@ -25,7 +25,7 @@ require_once __DIR__ . '/../src/templates/header.php';
             'label' => 'Panel administratora',
             'cards' => [
                 ['Konto administratora', 'Zalogowano do konta z uprawnieniami administratora systemu.'],
-                ['Zarządzanie przychodnią', 'Narzędzia do zarządzania personelem i wizytami będą dostępne po uruchomieniu odpowiedniego modułu.'],
+                ['Zarządzanie przychodnią', 'Panel administratora zawiera bieżące statystyki, kalendarz wizyt, zarządzanie personelem i usługami oraz eksport raportów.'],
             ],
         ],
         default => [

@@ -48,6 +48,13 @@ Nowy lekarz jest przypisywany do wybranej kategorii, aktywnych usług tej
 kategorii i pierwszej aktywnej placówki. Usługi i kategorie powiązane z
 zachowanymi wizytami nie mogą być usunięte; klucze obce chronią historię przed
 utratą. Operacje panelu wymagają tokenu CSRF i są sprawdzane po stronie serwera.
+Panel udostępnia także bieżące statystyki i wykres wizyt, kalendarz
+miesięczny, filtrowanie i wyszukiwanie wizyt, paginację, eksport CSV oraz
+historię zmian statusów. Administrator może zmieniać statusy zgodnie z
+dozwolonym przebiegiem wizyty, przypisywać pracownikowi wiele usług i
+zarządzać jego cykliczną dostępnością. Zmiany statusu są rejestrowane w
+`historia_statusow_wizyt`; eksport CSV zabezpiecza wartości tekstowe przed
+interpretacją jako formuły arkusza kalkulacyjnego.
 
 Dostępność cykliczna może mieć zakres dat, a wyjątki grafiku obsługują dzień
 niedostępności lub dodatkowy przedział godzin. Indeksy blokują dwie aktywne
