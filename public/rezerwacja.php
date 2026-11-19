@@ -36,8 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    $action = is_string($_POST['action'] ?? null) ? $_POST['action'] : '';
+
     try {
-        $action = is_string($_POST['action'] ?? null) ? $_POST['action'] : '';
         if ($action === 'cancel') {
             $appointmentId = filter_var($_POST['appointment_id'] ?? '', FILTER_VALIDATE_INT);
             if (!$appointmentId || $appointmentId < 1) {
@@ -205,7 +206,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         sort($slots);
 
         if (!in_array($time, $slots, true)) {
-            throw new InvalidArgumentException('Wybrana godzina jest niedostępna. Odśwież formularz i wybierz ponownie.');
+            throw new InvalidArgumentException(
+                'Wybrana godzina nie jest już dostępna. Wybierz jeden z aktualnie wyświetlonych terminów.'
+            );
         }
 
         $start = new DateTimeImmutable($date . ' ' . $time);
@@ -263,13 +266,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
-        if ($e instanceof InvalidArgumentException || $e instanceof RuntimeException) {
+        $databaseErrorCode = $e instanceof PDOException && is_array($e->errorInfo)
+            ? (int)($e->errorInfo[1] ?? 0)
+            : 0;
+        if ($databaseErrorCode === 1062) {
+            $_SESSION['error'] = 'Ten termin został właśnie zarezerwowany. Wybierz inną dostępną godzinę.';
+        } elseif (in_array($databaseErrorCode, [1205, 1213], true)) {
+            error_log('Appointment reservation lock conflict: ' . $e->getMessage());
+            $_SESSION['error'] = 'Inna rezerwacja jest właśnie zapisywana. Odśwież dostępne godziny i spróbuj ponownie.';
+        } elseif ($e instanceof PDOException) {
+            error_log('Appointment reservation failed: ' . $e->getMessage());
+            $_SESSION['error'] = 'Nie udało się zapisać rezerwacji. Sprawdź wybrane dane i spróbuj ponownie.';
+        } elseif ($e instanceof InvalidArgumentException || $e instanceof RuntimeException) {
             $_SESSION['error'] = $e->getMessage();
         } else {
             error_log('Appointment reservation failed: ' . $e->getMessage());
             $_SESSION['error'] = 'Nie udało się zapisać rezerwacji. Spróbuj ponownie.';
         }
-        header('Location: rezerwacja.php', true, 303);
+
+        $redirectUrl = 'rezerwacja.php';
+        if ($action !== 'cancel') {
+            $bookingContext = [];
+            foreach (['service_id', 'employee_id', 'clinic_id'] as $field) {
+                $value = filter_var($_POST[$field] ?? '', FILTER_VALIDATE_INT);
+                if ($value && $value > 0) {
+                    $bookingContext[$field] = $value;
+                }
+            }
+            if ($validDate($_POST['date'] ?? null)) {
+                $bookingContext['date'] = $_POST['date'];
+            }
+            if ($bookingContext) {
+                $redirectUrl .= '?' . http_build_query($bookingContext);
+            }
+        }
+        header('Location: ' . $redirectUrl, true, 303);
         exit;
     }
 }
@@ -489,7 +520,7 @@ require_once __DIR__ . '/../src/templates/header.php';
             </section>
 
             <section class="auth-card booking-form-card">
-                <h2 class="form-section-title mt-0">Data i godzina</h2>
+                <h2 class="form-section-title mt-0">Wybierz termin wizyty</h2>
                 <form method="get" action="rezerwacja.php" class="mb-3">
                     <input type="hidden" name="service_id" value="<?= (int)$serviceId ?>">
                     <input type="hidden" name="employee_id" value="<?= (int)$employeeId ?>">
@@ -497,7 +528,7 @@ require_once __DIR__ . '/../src/templates/header.php';
                     <label class="form-label" for="date">Wybierz datę</label>
                     <input class="form-control" id="date" name="date" type="date"
                         value="<?= $escape($date) ?>" min="<?= date('Y-m-d') ?>" max="<?= date('Y-m-d', strtotime('+90 days')) ?>" required>
-                    <button class="button button-secondary button-small mt-3" type="submit">Pokaż godziny</button>
+                    <button class="button button-secondary button-small mt-3" type="submit">Pokaż dostępne godziny</button>
                 </form>
 
                 <?php if ($slots): ?>
@@ -507,12 +538,23 @@ require_once __DIR__ . '/../src/templates/header.php';
                         <input type="hidden" name="employee_id" value="<?= (int)$employeeId ?>">
                         <input type="hidden" name="clinic_id" value="<?= (int)$clinicId ?>">
                         <input type="hidden" name="date" value="<?= $escape($date) ?>">
+                        <p class="booking-slot-date">
+                            Dostępne godziny: <strong><?= $escape((new DateTimeImmutable($date))->format('d.m.Y')) ?></strong>
+                            <span>(<?= count($slots) ?>)</span>
+                        </p>
+                        <p class="booking-slot-help">Wybierz godzinę rozpoczęcia. Zakres na każdym przycisku uwzględnia czas trwania usługi (<?= (int)$selectedService['czas_trwania_minut'] ?> min).</p>
                         <fieldset class="booking-slots">
-                            <legend class="form-label">Dostępne godziny</legend>
+                            <legend class="form-label">Dostępne przedziały</legend>
                             <?php foreach ($slots as $slot): ?>
+                                <?php
+                                $slotEnd = (new DateTimeImmutable($date . ' ' . $slot))
+                                    ->modify('+' . (int)$selectedService['czas_trwania_minut'] . ' minutes');
+                                $slotLabel = substr($slot, 0, 5) . '–' . $slotEnd->format('H:i');
+                                ?>
                                 <label>
-                                    <input type="radio" name="time" value="<?= $escape($slot) ?>" required>
-                                    <span><?= $escape(substr($slot, 0, 5)) ?></span>
+                                    <input type="radio" name="time" value="<?= $escape($slot) ?>"
+                                        aria-label="Wybierz termin od <?= $escape(substr($slot, 0, 5)) ?> do <?= $escape($slotEnd->format('H:i')) ?>" required>
+                                    <span><?= $escape($slotLabel) ?></span>
                                 </label>
                             <?php endforeach; ?>
                         </fieldset>

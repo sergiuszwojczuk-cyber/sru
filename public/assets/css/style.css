@@ -339,11 +339,15 @@ a:hover { color: var(--teal); }
 .booking-summary dt { color: var(--muted); }
 .booking-summary dd { margin: 0; font-weight: 700; text-align: right; }
 .booking-form-card { padding: 28px; }
-.booking-slots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 0; border: 0; }
+.booking-slot-date { margin-bottom: 6px; color: var(--teal-dark); }
+.booking-slot-help { margin-bottom: 12px; color: var(--muted); font-size: 13px; }
+.booking-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 0; border: 0; }
 .booking-slots legend { width: 100%; grid-column: 1 / -1; }
 .booking-slots label { position: relative; cursor: pointer; }
 .booking-slots input { position: absolute; opacity: 0; }
 .booking-slots span { display: grid; min-height: 44px; place-items: center; border: 1px solid var(--line); border-radius: 9px; background: #fff; font-weight: 700; }
+.booking-slots label:hover span { border-color: var(--teal); background: var(--mint); }
+.booking-slots input:focus-visible + span { outline: 3px solid rgba(22, 123, 112, .35); outline-offset: 2px; }
 .booking-slots input:checked + span { color: #fff; border-color: var(--teal); background: var(--teal); }
 .booking-appointments { margin-top: 22px; }
 .booking-status { display: inline-flex; padding: 6px 9px; border-radius: 999px; color: var(--teal-dark); background: var(--mint); font-size: 12px; font-weight: 800; }
@@ -412,7 +416,7 @@ a:hover { color: var(--teal); }
     .admin-calendar-day { min-height: 66px; padding: 6px 4px; font-size: 11px; }
     .admin-calendar-day span, .admin-calendar-day small { font-size: 9px; }
     .booking-filters { grid-template-columns: 1fr; }
-    .booking-slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .booking-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .admin-calendar-weekday { font-size: 9px; }
     .admin-chart { gap: 7px; }
     .admin-chart-column { grid-template-rows: 18px 110px auto; }

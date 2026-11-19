@@ -11,9 +11,10 @@ https://sru-production.up.railway.app/login.php
 Projekt systemu przychodni z kontami pacjentów, personelem, placówkami,
 specjalizacjami, usługami i modelem wizyt. Aplikacja udostępnia rejestrację,
 logowanie, profile, zmianę hasła, panele ról, listę kont administratorowi oraz
-podgląd grafiku pracownika. Administrator zarządza kategoriami (specjalizacjami)
-i usługami, kontami pracowników oraz przegląda zapisane wizyty. Internetowy
-moduł rezerwowania wizyt przez pacjenta nie jest jeszcze dostępny.
+podgląd grafiku pracownika. Klient może rezerwować wizyty wśród dostępnych
+terminów i zarządzać swoimi nadchodzącymi rezerwacjami. Administrator zarządza
+kategoriami (specjalizacjami) i usługami, kontami pracowników oraz przegląda
+zapisane wizyty.
 
 ### Technologie
 - PHP 8.1+ i PDO
