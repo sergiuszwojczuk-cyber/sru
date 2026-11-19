@@ -46,11 +46,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $pdo->beginTransaction();
             $stmt = $pdo->prepare(
-                'SELECT pacjent_id, data_wizyty, godzina_wizyty, status '
-                . 'FROM wizyty WHERE id = ? FOR UPDATE'
+                'SELECT pacjent_id, lekarz_id, data_wizyty, godzina_wizyty, status '
+                . 'FROM wizyty WHERE id = ?'
             );
             $stmt->execute([$appointmentId]);
             $appointment = $stmt->fetch();
+            if (!$appointment || (int)$appointment['pacjent_id'] !== (int)$_SESSION['user_id']) {
+                throw new InvalidArgumentException('Nie masz uprawnień do anulowania tej wizyty.');
+            }
+            $employeeLock = $pdo->prepare('SELECT id FROM uzytkownicy WHERE id = ? FOR UPDATE');
+            $employeeLock->execute([(int)$appointment['lekarz_id']]);
+            $employeeLock->fetchColumn();
+            $appointmentLock = $pdo->prepare(
+                'SELECT pacjent_id, data_wizyty, godzina_wizyty, status '
+                . 'FROM wizyty WHERE id = ? FOR UPDATE'
+            );
+            $appointmentLock->execute([$appointmentId]);
+            $appointment = $appointmentLock->fetch();
             if (!$appointment || (int)$appointment['pacjent_id'] !== (int)$_SESSION['user_id']) {
                 throw new InvalidArgumentException('Nie masz uprawnień do anulowania tej wizyty.');
             }
@@ -102,6 +114,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $pdo->beginTransaction();
 
+        $employeeLock = $pdo->prepare(
+            'SELECT id FROM uzytkownicy WHERE id = ? AND rola = \'lekarz\' AND czy_aktywny = 1 FOR UPDATE'
+        );
+        $employeeLock->execute([$employeeId]);
+        if (!$employeeLock->fetchColumn()) {
+            throw new InvalidArgumentException('Wybrany pracownik jest niedostępny.');
+        }
+
         $serviceStmt = $pdo->prepare(
             'SELECT s.id, s.nazwa, s.czas_trwania_minut, s.cena '
             . 'FROM uslugi s '
@@ -128,6 +148,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$patientId) {
             throw new RuntimeException('Brakuje profilu pacjenta.');
         }
+        $patientLock = $pdo->prepare('SELECT uzytkownik_id FROM profil_pacjenta WHERE uzytkownik_id = ? FOR UPDATE');
+        $patientLock->execute([(int)$patientId]);
+        $patientLock->fetchColumn();
 
         $slots = [];
         $weekday = (int)$selectedDate->format('N');
@@ -189,21 +212,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $end = $start->modify('+' . (int)$service['czas_trwania_minut'] . ' minutes');
 
         $overlapStmt = $pdo->prepare(
-            'SELECT 1 FROM wizyty '
-            . 'WHERE lekarz_id = ? AND data_wizyty = ? '
+            'SELECT data_wizyty, godzina_wizyty, czas_trwania_minut, lekarz_id, pacjent_id '
+            . 'FROM wizyty '
+            . 'WHERE data_wizyty BETWEEN DATE_SUB(?, INTERVAL 1 DAY) AND DATE_ADD(?, INTERVAL 1 DAY) '
             . 'AND status IN (\'zaplanowana\', \'potwierdzona\', \'zarejestrowana\') '
-            . 'AND CONCAT(data_wizyty, \' \', godzina_wizyty) < CAST(? AS DATETIME) '
-            . 'AND ADDTIME(CONCAT(data_wizyty, \' \', godzina_wizyty), SEC_TO_TIME(czas_trwania_minut * 60)) > CAST(? AS DATETIME) '
+            . 'AND (lekarz_id = ? OR pacjent_id = ?) '
             . 'FOR UPDATE'
         );
         $overlapStmt->execute([
-            $employeeId,
             $date,
-            $end->format('Y-m-d H:i:s'),
-            $start->format('Y-m-d H:i:s'),
+            $date,
+            $employeeId,
+            (int)$patientId,
         ]);
-        if ($overlapStmt->fetchColumn()) {
-            throw new InvalidArgumentException('Termin został właśnie zajęty. Wybierz inną godzinę.');
+        foreach ($overlapStmt->fetchAll() as $busyAppointment) {
+            $busyStart = new DateTimeImmutable(
+                $busyAppointment['data_wizyty'] . ' ' . $busyAppointment['godzina_wizyty']
+            );
+            $busyEnd = $busyStart->modify('+' . (int)$busyAppointment['czas_trwania_minut'] . ' minutes');
+            if ($start < $busyEnd && $end > $busyStart) {
+                throw new InvalidArgumentException('Termin został właśnie zajęty. Wybierz inną godzinę.');
+            }
         }
 
         $pdo->prepare("SET @aktor_uzytkownik_id = ?")->execute([(int)$_SESSION['user_id']]);
@@ -348,17 +377,20 @@ if ($serviceId && $employeeId && $clinicId) {
 
             if ($slots) {
                 $occupiedStmt = $pdo->prepare(
-                    'SELECT godzina_wizyty, czas_trwania_minut FROM wizyty '
-                    . 'WHERE lekarz_id = ? AND data_wizyty = ? '
+                    'SELECT data_wizyty, godzina_wizyty, czas_trwania_minut FROM wizyty '
+                    . 'WHERE (lekarz_id = ? OR pacjent_id = ?) '
+                    . 'AND data_wizyty BETWEEN DATE_SUB(?, INTERVAL 1 DAY) AND DATE_ADD(?, INTERVAL 1 DAY) '
                     . 'AND status IN (\'zaplanowana\', \'potwierdzona\', \'zarejestrowana\')'
                 );
-                $occupiedStmt->execute([$employeeId, $date]);
+                $occupiedStmt->execute([$employeeId, (int)$_SESSION['user_id'], $date, $date]);
                 $occupied = $occupiedStmt->fetchAll();
                 $slots = array_values(array_filter($slots, static function (string $slot) use ($occupied, $date, $selectedService): bool {
                     $start = new DateTimeImmutable($date . ' ' . $slot);
                     $end = $start->modify('+' . (int)$selectedService['czas_trwania_minut'] . ' minutes');
                     foreach ($occupied as $appointment) {
-                        $busyStart = new DateTimeImmutable($date . ' ' . $appointment['godzina_wizyty']);
+                        $busyStart = new DateTimeImmutable(
+                            $appointment['data_wizyty'] . ' ' . $appointment['godzina_wizyty']
+                        );
                         $busyEnd = $busyStart->modify('+' . (int)$appointment['czas_trwania_minut'] . ' minutes');
                         if ($start < $busyEnd && $end > $busyStart) {
                             return false;

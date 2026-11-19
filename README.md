@@ -57,10 +57,12 @@ zarządzać jego cykliczną dostępnością. Zmiany statusu są rejestrowane w
 interpretacją jako formuły arkusza kalkulacyjnego.
 
 Dostępność cykliczna może mieć zakres dat, a wyjątki grafiku obsługują dzień
-niedostępności lub dodatkowy przedział godzin. Indeksy blokują dwie aktywne
-wizyty tego samego pacjenta lub lekarza o identycznej godzinie rozpoczęcia.
-Nie wykrywają nakładających się przedziałów, więc przyszły moduł rezerwacji
-musi sprawdzać kolizje w transakcji.
+niedostępności lub dodatkowy przedział godzin. Moduł rezerwacji sprawdza po
+stronie serwera dostępność i wszystkie nakładające się przedziały czasu,
+uwzględniając czas trwania usług. Kontrola jest wykonywana ponownie bezpośrednio
+przed INSERT i jest chroniona blokadami rekordów pracownika i pacjenta, dzięki
+czemu równoczesne żądania są obsługiwane sekwencyjnie. Indeksy i unikalne
+ograniczenia chronią także identyczne godziny rozpoczęcia.
 
 Skrypt można uruchamiać ponownie: tworzy brakujące tabele i uzupełnia dane
 demonstracyjne bez usuwania danych. Nie aktualizuje struktury już istniejących
