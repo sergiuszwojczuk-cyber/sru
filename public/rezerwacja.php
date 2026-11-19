@@ -37,6 +37,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
+        $action = is_string($_POST['action'] ?? null) ? $_POST['action'] : '';
+        if ($action === 'cancel') {
+            $appointmentId = filter_var($_POST['appointment_id'] ?? '', FILTER_VALIDATE_INT);
+            if (!$appointmentId || $appointmentId < 1) {
+                throw new InvalidArgumentException('Nieprawidłowa wizyta.');
+            }
+
+            $pdo->beginTransaction();
+            $stmt = $pdo->prepare(
+                'SELECT pacjent_id, data_wizyty, godzina_wizyty, status '
+                . 'FROM wizyty WHERE id = ? FOR UPDATE'
+            );
+            $stmt->execute([$appointmentId]);
+            $appointment = $stmt->fetch();
+            if (!$appointment || (int)$appointment['pacjent_id'] !== (int)$_SESSION['user_id']) {
+                throw new InvalidArgumentException('Nie masz uprawnień do anulowania tej wizyty.');
+            }
+            if (!in_array($appointment['status'], ['zaplanowana', 'potwierdzona', 'zarejestrowana'], true)) {
+                throw new InvalidArgumentException('Ta wizyta nie może zostać anulowana.');
+            }
+
+            $appointmentDateTime = new DateTimeImmutable(
+                $appointment['data_wizyty'] . ' ' . $appointment['godzina_wizyty']
+            );
+            if ($appointmentDateTime <= new DateTimeImmutable('now')) {
+                throw new InvalidArgumentException('Nie można anulować wizyty z przeszłości.');
+            }
+
+            $pdo->prepare('SET @aktor_uzytkownik_id = ?')->execute([(int)$_SESSION['user_id']]);
+            $cancel = $pdo->prepare(
+                'UPDATE wizyty SET status = \'anulowana\', powod_anulowania = ?, anulowal_uzytkownik_id = ? '
+                . 'WHERE id = ?'
+            );
+            $cancel->execute([
+                'Anulowana przez klienta',
+                (int)$_SESSION['user_id'],
+                $appointmentId,
+            ]);
+            $pdo->commit();
+            $_SESSION['success'] = 'Wizyta została anulowana.';
+            header('Location: rezerwacja.php', true, 303);
+            exit;
+        }
+
         $serviceId = filter_var($_POST['service_id'] ?? '', FILTER_VALIDATE_INT);
         $employeeId = filter_var($_POST['employee_id'] ?? '', FILTER_VALIDATE_INT);
         $clinicId = filter_var($_POST['clinic_id'] ?? '', FILTER_VALIDATE_INT);
@@ -327,6 +371,22 @@ if ($serviceId && $employeeId && $clinicId) {
     }
 }
 
+$appointmentsStmt = $pdo->prepare(
+    'SELECT w.id, w.data_wizyty, w.godzina_wizyty, w.status, w.cena, '
+    . 's.nazwa AS usluga, p.nazwa AS placowka, p.ulica, p.miasto, '
+    . 'u.imie AS pracownik_imie, u.nazwisko AS pracownik_nazwisko '
+    . 'FROM wizyty w '
+    . 'JOIN uslugi s ON s.id = w.usluga_id '
+    . 'JOIN placowki p ON p.id = w.placowka_id '
+    . 'JOIN uzytkownicy u ON u.id = w.lekarz_id '
+    . 'WHERE w.pacjent_id = ? '
+    . 'AND w.status IN (\'zaplanowana\', \'potwierdzona\', \'zarejestrowana\') '
+    . 'AND (w.data_wizyty > CURDATE() OR (w.data_wizyty = CURDATE() AND w.godzina_wizyty >= CURTIME())) '
+    . 'ORDER BY w.data_wizyty, w.godzina_wizyty'
+);
+$appointmentsStmt->execute([(int)$_SESSION['user_id']]);
+$appointments = $appointmentsStmt->fetchAll();
+
 $pageTitle = 'Rezerwacja wizyty | Przychodnia Pochodnia';
 require_once __DIR__ . '/../src/templates/header.php';
 ?>
@@ -438,5 +498,43 @@ require_once __DIR__ . '/../src/templates/header.php';
     <?php elseif (!$services): ?>
         <p class="alert alert-light">Brak aktywnych usług dostępnych do rezerwacji.</p>
     <?php endif; ?>
+
+    <section class="auth-card booking-appointments">
+        <h2 class="form-section-title mt-0">Moje nadchodzące wizyty</h2>
+        <?php if (!$appointments): ?>
+            <p class="text-muted mb-0">Nie masz jeszcze zarezerwowanych wizyt.</p>
+        <?php else: ?>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr><th>Termin</th><th>Usługa</th><th>Pracownik</th><th>Placówka</th><th>Status</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($appointments as $appointment): ?>
+                        <tr>
+                            <td><?= $escape(date('d.m.Y', strtotime($appointment['data_wizyty']))) ?><br><strong><?= $escape(substr($appointment['godzina_wizyty'], 0, 5)) ?></strong></td>
+                            <td><?= $escape($appointment['usluga']) ?><br><small class="text-muted"><?= $escape(number_format((float)$appointment['cena'], 2, ',', ' ')) ?> zł</small></td>
+                            <td>lek. <?= $escape($appointment['pracownik_imie'] . ' ' . $appointment['pracownik_nazwisko']) ?></td>
+                            <td><?= $escape($appointment['placowka']) ?><br><small class="text-muted"><?= $escape($appointment['ulica'] . ', ' . $appointment['miasto']) ?></small></td>
+                            <td><span class="booking-status"><?= $escape(match ($appointment['status']) {
+                                'potwierdzona' => 'Potwierdzona',
+                                'zarejestrowana' => 'Zarejestrowana',
+                                default => 'Zaplanowana',
+                            }) ?></span></td>
+                            <td>
+                                <form method="post" action="rezerwacja.php" onsubmit="return confirm('Anulować tę wizytę?');">
+                                    <input type="hidden" name="csrf_token" value="<?= $escape(csrfToken()) ?>">
+                                    <input type="hidden" name="action" value="cancel">
+                                    <input type="hidden" name="appointment_id" value="<?= (int)$appointment['id'] ?>">
+                                    <button class="button button-outline button-small" type="submit">Anuluj</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </section>
 </section>
 <?php require_once __DIR__ . '/../src/templates/footer.php'; ?>

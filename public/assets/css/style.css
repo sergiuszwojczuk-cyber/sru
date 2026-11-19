@@ -345,6 +345,8 @@ a:hover { color: var(--teal); }
 .booking-slots input { position: absolute; opacity: 0; }
 .booking-slots span { display: grid; min-height: 44px; place-items: center; border: 1px solid var(--line); border-radius: 9px; background: #fff; font-weight: 700; }
 .booking-slots input:checked + span { color: #fff; border-color: var(--teal); background: var(--teal); }
+.booking-appointments { margin-top: 22px; }
+.booking-status { display: inline-flex; padding: 6px 9px; border-radius: 999px; color: var(--teal-dark); background: var(--mint); font-size: 12px; font-weight: 800; }
 
 .site-footer { border-top: 1px solid var(--line); background: #fff; }
 .footer-inner {
