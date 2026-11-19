@@ -11,7 +11,7 @@ require_once __DIR__ . '/../src/templates/header.php';
             'label' => 'Panel klienta',
             'cards' => [
                 ['Dane pacjenta', 'Twoje konto jest aktywne. W razie potrzeby skontaktuj się z rejestracją, aby zaktualizować dane.'],
-                ['Wizyty', 'Internetowa rezerwacja wizyt będzie dostępna po uruchomieniu modułu rezerwacji.'],
+                ['Wizyty', 'Zarezerwuj wizytę, wybierając usługę, pracownika, placówkę i dogodny termin.'],
             ],
         ],
         'lekarz', 'pracownik' => [

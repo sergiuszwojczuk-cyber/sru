@@ -29,6 +29,9 @@
                 <?php if (isLoggedIn()): ?>
                     <li><span class="nav-welcome"><?= htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['email'], ENT_QUOTES, 'UTF-8') ?></span></li>
                     <li><a href="profile.php">Mój profil</a></li>
+                    <?php if (hasRole('pacjent')): ?>
+                        <li><a href="rezerwacja.php">Zarezerwuj wizytę</a></li>
+                    <?php endif; ?>
                     <?php if (hasRole('pracownik')): ?>
                         <li><a href="pracownik.php">Panel pracownika</a></li>
                     <?php endif; ?>
