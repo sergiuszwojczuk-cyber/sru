@@ -88,6 +88,17 @@ php public/test-db.php
 Instalator i diagnostyka działają wyłącznie z terminala. Użytkownik bazy musi
 mieć uprawnienia do tworzenia tabel, indeksów i triggerów.
 
+### Testy
+
+Testy logiki generowania terminów i wykrywania nakładających się wizyt można
+uruchomić bez bazy danych:
+
+```sh
+php tests/AvailabilityTest.php
+```
+
+Jeśli używasz Composera, ten sam zestaw uruchomisz poleceniem `composer test`.
+
 ### Konta demonstracyjne
 Hasło dla wszystkich poniższych kont: `demo1234`.
 

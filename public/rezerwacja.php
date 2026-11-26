@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../src/config/auth.php';
 require_once __DIR__ . '/../src/config/database.php';
+require_once __DIR__ . '/../src/models/Availability.php';
 requireRole('pacjent');
 
 $pdo = getDbConnection();
@@ -13,21 +14,6 @@ $validDate = static function (mixed $value): bool {
     $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
     return $date !== false && $date->format('Y-m-d') === $value;
 };
-
-function generateSlots(string $date, string $from, string $to, int $duration): array
-{
-    $slots = [];
-    $current = new DateTimeImmutable($date . ' ' . substr($from, 0, 8));
-    $end = new DateTimeImmutable($date . ' ' . substr($to, 0, 8));
-    $now = new DateTimeImmutable('now');
-    while ($current->modify('+' . $duration . ' minutes') <= $end) {
-        if ($current >= $now) {
-            $slots[] = $current->format('H:i:s');
-        }
-        $current = $current->modify('+30 minutes');
-    }
-    return $slots;
-}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!hasValidCsrfToken($_POST['csrf_token'] ?? null)) {
@@ -228,14 +214,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $employeeId,
             (int)$patientId,
         ]);
-        foreach ($overlapStmt->fetchAll() as $busyAppointment) {
-            $busyStart = new DateTimeImmutable(
-                $busyAppointment['data_wizyty'] . ' ' . $busyAppointment['godzina_wizyty']
-            );
-            $busyEnd = $busyStart->modify('+' . (int)$busyAppointment['czas_trwania_minut'] . ' minutes');
-            if ($start < $busyEnd && $end > $busyStart) {
-                throw new InvalidArgumentException('Termin został właśnie zajęty. Wybierz inną godzinę.');
-            }
+        if (hasAppointmentOverlap($start, $end, $overlapStmt->fetchAll())) {
+            throw new InvalidArgumentException('Termin został właśnie zajęty. Wybierz inną godzinę.');
         }
 
         $pdo->prepare("SET @aktor_uzytkownik_id = ?")->execute([(int)$_SESSION['user_id']]);
@@ -418,16 +398,7 @@ if ($serviceId && $employeeId && $clinicId) {
                 $slots = array_values(array_filter($slots, static function (string $slot) use ($occupied, $date, $selectedService): bool {
                     $start = new DateTimeImmutable($date . ' ' . $slot);
                     $end = $start->modify('+' . (int)$selectedService['czas_trwania_minut'] . ' minutes');
-                    foreach ($occupied as $appointment) {
-                        $busyStart = new DateTimeImmutable(
-                            $appointment['data_wizyty'] . ' ' . $appointment['godzina_wizyty']
-                        );
-                        $busyEnd = $busyStart->modify('+' . (int)$appointment['czas_trwania_minut'] . ' minutes');
-                        if ($start < $busyEnd && $end > $busyStart) {
-                            return false;
-                        }
-                    }
-                    return true;
+                    return !hasAppointmentOverlap($start, $end, $occupied);
                 }));
             }
         }
