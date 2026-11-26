@@ -1,5 +1,16 @@
 <?php
 require_once __DIR__ . '/../src/config/session.php';
+if (!isLoggedIn()) {
+    require_once __DIR__ . '/../src/config/database.php';
+    $servicesStmt = getDbConnection()->query(
+        'SELECT u.nazwa, u.opis, u.czas_trwania_minut, u.cena, s.nazwa AS specjalizacja '
+        . 'FROM uslugi u JOIN specjalizacje s ON s.id = u.specjalizacja_id '
+        . 'WHERE u.czy_aktywny = 1 AND s.czy_aktywny = 1 '
+        . 'ORDER BY s.nazwa, u.nazwa'
+    );
+    $publicServices = $servicesStmt->fetchAll();
+    $publicSpecialtyCount = count(array_unique(array_column($publicServices, 'specjalizacja')));
+}
 $pageTitle = 'Strona główna | Przychodnia Pochodnia';
 require_once __DIR__ . '/../src/templates/header.php';
 ?>
@@ -93,25 +104,33 @@ require_once __DIR__ . '/../src/templates/header.php';
             <div class="panel-line"></div>
             <p class="panel-caption">Wspieramy Cię na każdym etapie dbania o zdrowie.</p>
             <div class="panel-stats">
-                <div><strong>5</strong><span>specjalizacji</span></div>
-                <div><strong>Pon–Pt</strong><span>dni przyjęć</span></div>
+                <div><strong><?= $publicSpecialtyCount ?></strong><span>specjalizacji</span></div>
+                <div><strong><?= count($publicServices) ?></strong><span>aktywnych usług</span></div>
             </div>
         </div>
     </section>
 
-    <section class="content-section">
+    <section class="content-section" id="oferta">
         <div class="section-heading">
             <p class="eyebrow">Nasza oferta</p>
-            <h2>Specjaliści, którym możesz zaufać</h2>
-            <p>Wybierz zakres opieki dopasowany do swoich potrzeb.</p>
+            <h2>Usługi dopasowane do Twoich potrzeb</h2>
+            <p>Sprawdź zakres, czas trwania i cenę usług dostępnych w naszej przychodni.</p>
         </div>
         <div class="specialty-grid">
-            <article class="specialty-card"><span>01</span><h3>Kardiologia</h3><p>Profilaktyka i diagnostyka chorób serca.</p></article>
-            <article class="specialty-card"><span>02</span><h3>Okulistyka</h3><p>Badania wzroku i konsultacje okulistyczne.</p></article>
-            <article class="specialty-card"><span>03</span><h3>Pediatria</h3><p>Opieka i konsultacje dla dzieci.</p></article>
-            <article class="specialty-card"><span>04</span><h3>Medycyna rodzinna</h3><p>Podstawowa opieka dla całej rodziny.</p></article>
-            <article class="specialty-card"><span>05</span><h3>Dermatologia</h3><p>Konsultacje dotyczące zdrowia skóry.</p></article>
+            <?php if (!$publicServices): ?>
+                <p class="text-muted">Aktualnie nie ma aktywnych usług w ofercie.</p>
+            <?php else: ?>
+                <?php foreach ($publicServices as $index => $service): ?>
+                    <article class="specialty-card">
+                        <span><?= sprintf('%02d', $index + 1) ?> · <?= htmlspecialchars($service['specjalizacja'], ENT_QUOTES, 'UTF-8') ?></span>
+                        <h3><?= htmlspecialchars($service['nazwa'], ENT_QUOTES, 'UTF-8') ?></h3>
+                        <p><?= htmlspecialchars($service['opis'] ?: 'Szczegóły usługi uzyskasz w rejestracji.', ENT_QUOTES, 'UTF-8') ?></p>
+                        <p class="service-meta"><?= (int)$service['czas_trwania_minut'] ?> min · <?= htmlspecialchars(number_format((float)$service['cena'], 2, ',', ' '), ENT_QUOTES, 'UTF-8') ?> zł</p>
+                    </article>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
+        <p class="mt-4"><a class="button button-primary" href="register.php">Załóż konto i zarezerwuj wizytę</a></p>
     </section>
 
     <section class="contact-band">

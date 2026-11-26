@@ -14,7 +14,8 @@ logowanie, profile, zmianę hasła, panele ról, listę kont administratorowi or
 podgląd grafiku pracownika. Klient może rezerwować wizyty wśród dostępnych
 terminów i zarządzać swoimi nadchodzącymi rezerwacjami. Administrator zarządza
 kategoriami (specjalizacjami) i usługami, kontami pracowników oraz przegląda
-zapisane wizyty.
+zapisane wizyty. Publiczna oferta na stronie głównej pobiera aktywne usługi,
+ich opisy, czas trwania i ceny bezpośrednio z bazy danych.
 
 ### Technologie
 - PHP 8.1+ i PDO
